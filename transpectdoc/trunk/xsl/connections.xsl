@@ -7,6 +7,7 @@
   exclude-result-prefixes="c xs transpect"
   version="2.0">
 
+  <xsl:import href="normalize-documentation.xsl"/>
   <xsl:include href="common.xsl"/>
   
   <xsl:template match="* | @*">
@@ -14,6 +15,11 @@
 <!--      <xsl:attribute name="is-step" select="transpect:is-step(self::*)"/>-->
       <xsl:apply-templates select="@*, node()"/>
     </xsl:copy>
+  </xsl:template>
+
+  <!-- side effect: convert plain text p:documentation to HTML --> 
+  <xsl:template match="p:documentation">
+    <xsl:apply-templates select="." mode="normalize-documentation"/>
   </xsl:template>
 
   <!-- these keys return the primary input/output port declarations from the step declarations.
