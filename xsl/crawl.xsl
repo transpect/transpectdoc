@@ -55,6 +55,10 @@
     </xsl:copy>
   </xsl:template>-->
 
+  <xsl:template match="*">
+    <xsl:copy-of select="."/>
+  </xsl:template>
+
   <xsl:template match="*[transpect:is-step(.)]
                         [not(@name)]">
     <xsl:copy>
