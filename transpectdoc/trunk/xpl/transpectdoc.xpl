@@ -28,10 +28,14 @@
   <p:input port="connections-xslt">
     <p:document href="../xsl/connections.xsl"/>
   </p:input>
-  
-  <p:output port="result" primary="true"/>
-  <p:serialization port="result" omit-xml-declaration="false" indent="true"/>
 
+  <p:input port="rendering-xslt">
+    <p:document href="../xsl/render-html-pages.xsl"/>
+  </p:input>
+  
+<!--  <p:output port="result" primary="true"/>
+  <p:serialization port="result" omit-xml-declaration="false" indent="true"/>
+-->
   <p:option name="debug" required="false" select="'yes'"/>
   <p:option name="debug-dir-uri" required="false" select="'debug'"/>
   
@@ -54,6 +58,9 @@
   </letex:store-debug>
 
   <p:xslt name="connections">
+    <p:documentation>Makes implicit primary port connections explicit. 
+      As an unrelated side effect, will normalize plain text and DocBook markup within 
+    p:documentation elements to HTML.</p:documentation>
     <p:input port="parameters"><p:empty/></p:input>
     <p:input port="stylesheet">
       <p:pipe port="connections-xslt" step="transpectdoc"/>
@@ -64,5 +71,23 @@
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </letex:store-debug>
-
+  
+  <p:xslt name="render">
+    <p:input port="parameters"><p:empty/></p:input>
+    <p:input port="stylesheet">
+      <p:pipe port="rendering-xslt" step="transpectdoc"/>
+    </p:input>
+  </p:xslt>
+  
+  <p:sink/>
+  
+  <p:for-each>
+    <p:iteration-source>
+      <p:pipe port="secondary" step="render"/>
+    </p:iteration-source>
+    <p:store omit-xml-declaration="false">
+      <p:with-option name="href" select="base-uri()"/>
+    </p:store>
+  </p:for-each>
+  
 </p:declare-step>

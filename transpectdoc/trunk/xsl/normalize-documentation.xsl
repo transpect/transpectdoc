@@ -21,13 +21,11 @@
     <xsl:variable name="with-br" as="node()+">
       <xsl:analyze-string select="." regex="([.:])[ \t]*[\n\r]+[ \t]*(\p{{Lu}})" flags="s">
         <xsl:matching-substring>
-          <xsl:message select="'MS ', ."/>
           <xsl:value-of select="regex-group(1)"/>
           <br/>
           <xsl:value-of select="regex-group(2)"/>
         </xsl:matching-substring>
         <xsl:non-matching-substring>
-          <xsl:message select="'NMS ', ."/>
           <xsl:value-of select="."/>
         </xsl:non-matching-substring>
       </xsl:analyze-string>
