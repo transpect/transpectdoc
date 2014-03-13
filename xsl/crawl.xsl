@@ -18,7 +18,7 @@
         <xsl:sequence select="."/>
       </xsl:for-each-group>
     </xsl:variable>
-    <c:files>
+    <c:files display-name="index">
       <xsl:copy-of select="$consolidate-by-href" copy-namespaces="no"/>
     </c:files>
   </xsl:template>
@@ -26,11 +26,20 @@
   <xsl:template match="text()"/>
   
   <xsl:template match="/*" priority="2">
+    <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
     <c:file source-type="{local-name()}" href="{base-uri()}">
+      <xsl:if test="$pre-catalog-resolution-href">
+        <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>  
+      </xsl:if>
       <xsl:call-template name="process-inner"/>
     </c:file>
     <xsl:apply-templates select="p:import"/>
   </xsl:template>
+
+  <xsl:function name="transpect:basename" as="xs:string">
+    <xsl:param name="href" as="xs:string"/>
+    <xsl:sequence select="replace($href, '^.+/', '')"/>
+  </xsl:function>
 
   <xsl:template name="process-inner">
     <xsl:copy-of select="@name"/>
@@ -39,6 +48,24 @@
       <xsl:attribute name="name" select="generate-id()"/>
       <xsl:attribute name="generated-name" select="'true'"/>
     </xsl:if>
+    <xsl:attribute name="display-name">
+      <xsl:choose>
+        <xsl:when test="local-name() = ('declare-step', 'pipeline')">
+          <xsl:value-of select="if (@type) 
+                                then @type 
+                                else concat('[anonymous] ', replace(transpect:basename(base-uri()), '\.[^.]+$', ''))"/>
+          <xsl:if test="parent::p:library">
+            <xsl:text> (in library </xsl:text>
+            <xsl:value-of select="transpect:basename(base-uri())"/>
+            <xsl:text>)</xsl:text>
+          </xsl:if>
+        </xsl:when>
+        <xsl:when test="self::p:library">
+          <xsl:value-of select="transpect:basename(base-uri())"/>
+          <xsl:text> (library)</xsl:text>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:attribute>
     <xsl:copy-of select="p:input | p:output | p:import | p:serialization"/>
     <xsl:if test="local-name() = 'library'">
       <c:step-declarations>
@@ -96,14 +123,10 @@
     </c:step-declaration>
   </xsl:template>
   
-  <xsl:template match="p:import" mode="internals">
-    <c:import>
-      <xsl:copy-of select="@href"/>
-    </c:import>
-  </xsl:template>
-
   <xsl:template match="p:import">
-    <xsl:apply-templates select="doc(@href)"/>
+    <xsl:apply-templates select="doc(@href)">
+      <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
+    </xsl:apply-templates>
   </xsl:template>
   
 </xsl:stylesheet>
