@@ -2,6 +2,7 @@
 <p:declare-step 
   xmlns:p="http://www.w3.org/ns/xproc"
   xmlns:c="http://www.w3.org/ns/xproc-step" 
+  xmlns:cx="http://xmlcalabash.com/ns/extensions" 
   xmlns:letex="http://www.le-tex.de/namespace"
   exclude-inline-prefixes="#all"
   version="1.0"
@@ -39,14 +40,32 @@
   <p:option name="debug" required="false" select="'yes'"/>
   <p:option name="debug-dir-uri" required="false" select="'debug'"/>
   
+  <p:import href="http://xmlcalabash.com/extension/steps/library-1.0.xpl"/>
   <p:import href="http://transpect.le-tex.de/xproc-util/store-debug/store-debug.xpl"/>
-  
+
+  <p:variable name="base-dir-uri-regex" 
+    select="replace(
+              replace(
+                static-base-uri(), 
+                'transpectdoc/xpl(/.*)?$', 
+                ''
+              ),
+              '^file:/+',
+              '^file:/+'
+            )">
+    <p:documentation xmlns="http://www.w3.org/1999/xhtml">
+      <p><a href="https://twitter.com/westmaaan/status/447696882442043392/photo/1">Assumption</a>: 
+        no regex reserved chars such as brackets or curly braces in static-base-uri()</p>
+    </p:documentation>
+  </p:variable>
+
   <p:xslt name="crawl" template-name="main">
     <p:input port="source">
       <p:pipe port="source" step="transpectdoc"/>
       <p:document href="lib/xproc-1.0.xpl"/>
     </p:input>
     <p:input port="parameters"><p:empty/></p:input>
+    <p:with-param name="base-dir-uri-regex" select="$base-dir-uri-regex"/>
     <p:input port="stylesheet">
       <p:pipe port="crawling-xslt" step="transpectdoc"/>
     </p:input>

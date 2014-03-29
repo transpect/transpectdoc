@@ -40,12 +40,24 @@
     <xsl:sequence select="replace(replace($name, '[(\[\])]', ''), '[^-\w._]+', '_', 'i')"/>
   </xsl:function>
 
+  <xsl:function name="transpect:page-name" as="xs:string">
+    <xsl:param name="display-name" as="xs:string"/>
+    <xsl:param name="output-base-uri" as="xs:string?"/>
+    <xsl:sequence select="concat(if ($output-base-uri)
+                                 then concat($output-base-uri, '/')
+                                 else '', 
+                                 transpect:normalize-for-filename($display-name), 
+                                 '.html'
+                                )"/>
+  </xsl:function>
+  
   <xsl:template match="c:file | c:step-declaration">
     <xsl:call-template name="page"/>
+    <xsl:apply-templates select="c:step-declarations"/>
   </xsl:template>
 
   <xsl:template name="page">
-    <xsl:result-document href="{$output-base-uri}/{transpect:normalize-for-filename(@display-name)}.html">
+    <xsl:result-document href="{transpect:page-name(@display-name, $output-base-uri)}">
       <html>
         <head>
           <meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
@@ -60,20 +72,58 @@
     </xsl:result-document>
   </xsl:template>
 
-  <xsl:template match="*[@source-type = ('declare-step', 'pipeline')]" mode="create-html">
+  <xsl:template match="*[@source-type = ('declare-step', 'pipeline', 'library')]" mode="create-html">
     <h2>
       <xsl:value-of select="@display-name"/>
     </h2>
-    <xsl:call-template name="input-declarations"/>
-    <xsl:call-template name="output-declarations"/>
-    <xsl:call-template name="option-declarations"/>
+    <xsl:call-template name="file-paths"/>
     <!-- main documentation -->
     <xsl:apply-templates mode="#current"
       select="p:documentation[not(preceding-sibling::*[transpect:is-step(.)])]"/>
-    <div class="subpipeline">
-      <xsl:apply-templates mode="#current" 
-        select="*[transpect:is-step(.)] | p:documentation[preceding-sibling::*[transpect:is-step(.)]] "/>
-    </div>
+    <xsl:choose>
+      <xsl:when test="@source-type = 'library'">
+        <xsl:apply-templates select="c:step-declarations/c:step-declaration" mode="links"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:call-template name="input-declarations"/>
+        <xsl:call-template name="output-declarations"/>
+        <xsl:call-template name="option-declarations"/>
+        <div class="subpipeline">
+          <xsl:apply-templates mode="#current" 
+            select="*[transpect:is-step(.)] | p:documentation[preceding-sibling::*[transpect:is-step(.)]] "/>
+        </div>    
+        <div class="use">
+          <h3>Used by</h3>
+          <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]"
+            group-by="@display-name">
+            <xsl:sort select="current-grouping-key()"/>
+            <xsl:apply-templates select="." mode="links"/>  
+          </xsl:for-each-group>
+        </div>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="*" mode="links">
+    <p class="nav">
+      <xsl:value-of select="@source-type"/>
+      <xsl:text> </xsl:text>
+      <a href="{transpect:page-name(@display-name, ())}">
+        <xsl:value-of select="@display-name"/>
+      </a>
+    </p>
+  </xsl:template>
+
+  <xsl:template name="file-paths">
+    <p class="file-path">
+      <xsl:value-of select="(@project-relative-path, @href)[1]"/>
+    </p>
+    <xsl:if test="@canonical-href">
+      <p class="file-path">
+        Canonical URI:
+        <xsl:value-of select="@canonical-href"/>
+      </p>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="input-declarations">
