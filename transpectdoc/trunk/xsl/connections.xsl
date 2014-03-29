@@ -58,6 +58,8 @@
     </xsl:copy>
   </xsl:template>
 
+  <xsl:template match="text()[not(normalize-space())]" mode="make-primary-input-explicit make-primary-output-explicit"/>
+
   <!-- a step with a primary input port but without explicit connection to this input port -->
   <xsl:template match="*[transpect:is-step(.) (: is a step (including step declarations) :)]
                         [not(@source-type = ('declare-step', 'pipeline')) (: is not the declaration; rather, a step in a (sub)pipeline :)]

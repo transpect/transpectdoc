@@ -8,7 +8,9 @@
   version="2.0">
   
   <xsl:include href="common.xsl"/>
-  
+
+  <xsl:param name="base-dir-uri-regex" as="xs:string"/>
+
   <xsl:template name="main">
     <xsl:variable name="raw-list" as="element(c:file)*">
       <xsl:apply-templates select="collection()"/>
@@ -28,6 +30,11 @@
   <xsl:template match="/*" priority="2">
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
     <c:file source-type="{local-name()}" href="{base-uri()}">
+      <xsl:variable name="project-relative-path" as="xs:string"
+        select="replace(base-uri(), $base-dir-uri-regex, '')"/>
+      <xsl:if test="$project-relative-path ne base-uri()">
+        <xsl:attribute name="project-relative-path" select="$project-relative-path"/>
+      </xsl:if>
       <xsl:if test="$pre-catalog-resolution-href">
         <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>  
       </xsl:if>
