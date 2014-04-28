@@ -473,7 +473,7 @@
     </p>
   </xsl:template>
   
-  <xsl:template match="p:choose | p:otherwise" mode="subpipeline-environment">
+  <xsl:template match="p:choose | p:otherwise | p:for-each" mode="subpipeline-environment">
     <xsl:value-of select="name()"/>
   </xsl:template>
 
@@ -491,6 +491,21 @@
       </xsl:apply-templates>
     </xsl:variable>
     <tr>
+      <xsl:choose>
+        <xsl:when test="self::p:choose">
+          <xsl:attribute name="class" select="'cases'"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:choose>
+            <xsl:when test="position() mod 2 = 0">
+              <xsl:attribute name="class" select="'even cond'"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:attribute name="class" select="'odd cond'"/>
+            </xsl:otherwise>
+          </xsl:choose>          
+        </xsl:otherwise>
+      </xsl:choose>
       <td rowspan="{count($process-children) + 1}">
         <p class="rotate">
           <xsl:apply-templates select="." mode="subpipeline-environment"/>
@@ -519,6 +534,41 @@
     <xsl:sequence select="$process-children"/>
   </xsl:template>
 
+  <xsl:template match="p:for-each" mode="subpipeline">
+    <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
+    <xsl:variable name="process-children" as="element(html:tr)*">
+      <xsl:apply-templates select="*[transpect:is-step(.)]" mode="#current">
+        <xsl:with-param name="depth" select="$depth - 1" tunnel="yes"/>
+      </xsl:apply-templates>
+    </xsl:variable>
+    <tr class="iteration">
+      <td rowspan="{count($process-children) + 1}">
+        <p class="rotate">
+          <xsl:apply-templates select="." mode="subpipeline-environment"/>
+          <xsl:if test="@name">
+            <xsl:text xml:space="preserve"> </xsl:text>
+            <span class="name{if (@generated-name = 'true') then ' generated' else ''}" id="step_{@name}">
+              <xsl:value-of select="@name"/>
+            </span>
+          </xsl:if>
+        </p>
+      </td>
+      <!-- §§§ -->
+      <td colspan="{$depth - 1}">
+        <xsl:apply-templates select="p:documentation" mode="#current"/>
+      </td>
+      <td>
+        <!-- render p:iteration-source here? -->
+      </td>
+      <td> 
+        <!-- create some kind of common description for p:output here? -->
+      </td>
+      <td>
+        <!-- no connections? Or mention default readable port here? -->
+      </td>
+    </tr>
+    <xsl:sequence select="$process-children"/>
+  </xsl:template>
   
   <xsl:template match="*" mode="verbose">
     <xsl:text>&lt;</xsl:text>
