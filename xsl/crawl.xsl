@@ -11,6 +11,8 @@
 
   <xsl:param name="base-dir-uri-regex" as="xs:string"/>
 
+  <xsl:variable name="initial-base-uris" as="xs:string+" select="collection()/base-uri()[not(ends-with(., 'lib/xproc-1.0.xpl'))]"/>
+
   <xsl:template name="main">
     <xsl:variable name="raw-list" as="element(c:file)*">
       <xsl:apply-templates select="collection()"/>
@@ -55,6 +57,11 @@
       <xsl:attribute name="name" select="generate-id()"/>
       <xsl:attribute name="generated-name" select="'true'"/>
     </xsl:if>
+    <xsl:if test="local-name() = ('declare-step', 'pipeline')
+                  and
+                  (base-uri() = $initial-base-uris)">
+      <xsl:attribute name="front-end" select="'true'"/>
+    </xsl:if>
     <xsl:attribute name="display-name">
       <xsl:choose>
         <xsl:when test="local-name() = ('declare-step', 'pipeline')">
@@ -83,13 +90,12 @@
                                            | p:declare-step | p:pipeline )"/>
   </xsl:template>
 
-  <!--<xsl:template match="* | @*">
-    <xsl:copy>
-      <xsl:apply-templates select="@*, node()"/>
-    </xsl:copy>
-  </xsl:template>-->
-
+  <xsl:template match="@*">
+    <xsl:copy/>
+  </xsl:template>
+  
   <xsl:template match="*">
+    <xsl:comment>huchzi</xsl:comment>
     <xsl:copy-of select="."/>
   </xsl:template>
 
@@ -98,13 +104,13 @@
     <xsl:copy>
       <xsl:attribute name="name" select="generate-id()"/>
       <xsl:attribute name="generated-name" select="'true'"/>
-      <xsl:copy-of select="@*, node()"/>
+      <xsl:apply-templates select="@*, node()"/>
     </xsl:copy>
   </xsl:template>
   
   <xsl:template match="*[transpect:is-step(.)][@name]">
     <xsl:copy>
-      <xsl:copy-of select="@*, node()"/>
+      <xsl:apply-templates select="@*, node()"/>
     </xsl:copy>
   </xsl:template>
   
