@@ -1,0 +1,143 @@
+body {
+  font-family:Calibri,Lucida,sans-serif;
+  font-size:12pt;
+}
+
+.macroblock {
+  display:inline-block;
+  vertical-align:top;
+  border:0.5pt solid #e0d0a0;
+  background-color:#ffd;
+  padding:0.5em;
+}
+
+#nav {
+  width:26%;
+  margin-right:2em;
+}
+
+#main {
+  width:65%;
+}
+
+.block {
+  margin-top:1em;
+  width:95%;
+  padding:0.5em;
+}
+
+.block table {
+  border-collapse:collapse;
+  border-width:1pt;
+  background-color:#ffd;
+  width:100%;
+}
+
+.block table td {
+  border:0.5pt solid #dcb;
+}
+
+div.output {
+  background-color:#f93;
+}
+
+div.input {
+  background-color:#f83;
+}
+
+div.option {
+  background-color:#ca5;
+}
+
+div.subpipeline {
+  background-color:#eda;
+  overflow-x:scroll;
+}
+
+td, th {
+  padding:0.3em;
+}
+
+th {
+  text-align:left;
+  font-weight:bold;
+}
+
+col.name {
+  width:25%;
+}
+
+col.doc {
+  width:45%;
+}
+
+col.connect {
+  width:30%;
+}
+
+.none {
+  font-style:italic;
+}
+
+h1 {
+  margin-top:0.5em;
+}
+
+h2 {
+  margin-top:1em;
+}
+
+
+.block h3 {
+  font-size:116%;
+  margin-top:0;
+  margin-bottom:0.5em;
+}
+
+p {
+  margin-bottom:0;
+  margin-top:0;
+}
+
+span.flag {
+  margin-left:0.2em;
+  margin-right:0.2em;
+}
+
+
+.primary {
+  color:#a80;
+}
+
+.required {
+  color:#f35;
+}
+
+.sequence {
+  color:#3a6;
+}
+
+span.name {
+  font-weight:bold;
+  font-style:italic;
+  color:#963;
+}
+
+.rotate {
+    writing-mode:bt-lr;
+    transform:rotate(-90deg);
+    -webkit-transform:rotate(-90deg);
+    white-space:nowrap;
+    display:block;
+    position:relative;
+    bottom:-2em;
+    height:1em;  width:1em;
+}
+
+.name.generated {
+  font-weight:normal;
+}
+
+.names {
+  font-weight:bold;
+}

@@ -2,7 +2,8 @@
 <p:declare-step 
   xmlns:p="http://www.w3.org/ns/xproc"
   xmlns:c="http://www.w3.org/ns/xproc-step" 
-  xmlns:cx="http://xmlcalabash.com/ns/extensions" 
+  xmlns:cx="http://xmlcalabash.com/ns/extensions"
+  xmlns:cxf="http://xmlcalabash.com/ns/extensions/fileutils" 
   xmlns:letex="http://www.le-tex.de/namespace"
   exclude-inline-prefixes="#all"
   version="1.0"
@@ -42,6 +43,13 @@
   
   <p:import href="http://xmlcalabash.com/extension/steps/library-1.0.xpl"/>
   <p:import href="http://transpect.le-tex.de/xproc-util/store-debug/store-debug.xpl"/>
+
+  <p:variable name="output-base-uri" 
+    select="replace(
+              static-base-uri(), 
+              'transpectdoc/xpl(/.*)?$', 
+              'doc'
+            )"/>
 
   <p:variable name="base-dir-uri-regex" 
     select="replace(
@@ -96,6 +104,7 @@
     <p:input port="stylesheet">
       <p:pipe port="rendering-xslt" step="transpectdoc"/>
     </p:input>
+    <p:with-param name="output-base-uri" select="$output-base-uri"/>
   </p:xslt>
   
   <p:sink/>
@@ -108,5 +117,9 @@
       <p:with-option name="href" select="base-uri()"/>
     </p:store>
   </p:for-each>
+  
+  <cxf:copy href="../css/transpectdoc.css">
+    <p:with-option name="target" select="resolve-uri($output-base-uri, 'transpectdoc.css')"/>
+  </cxf:copy>
   
 </p:declare-step>

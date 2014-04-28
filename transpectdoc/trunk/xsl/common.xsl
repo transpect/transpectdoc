@@ -20,13 +20,19 @@
                       ">
         <xsl:sequence select="false()"/>
       </xsl:when>
+      <xsl:when test="$elt/name() = ('p:choose', 'p:for-each', 'p:group', 'p:try')">
+        <xsl:sequence select="true()"/>
+      </xsl:when>
       <!-- pipeline declarations itself and their children (except for the list above)
         qualify as 'steps' for the purpose of this function -->
-      <xsl:when test="($elt/../local-name(), $elt/../@source-type) = ('pipeline', 'declare-step', 'step-declaration')">
+      <xsl:when test="$elt/../@source-type = ('pipeline', 'declare-step', 'step-declaration')">
+        <xsl:sequence select="true()"/>
+      </xsl:when>
+      <xsl:when test="$elt/../name() = ('p:for-each', 'p:group', 'p:catch', 'p:when', 'p:otherwise', 'p:pipeline', 'p:declare-step')">
         <xsl:sequence select="true()"/>
       </xsl:when>
       <!-- correction: pipeline declarations need only have names if they actually contain a subpipeline --> 
-      <xsl:when test="($elt/local-name(), $elt/@source-type) = ('pipeline', 'declare-step', 'step-declaration')">
+      <xsl:when test="$elt/@source-type = ('pipeline', 'declare-step', 'step-declaration')">
         <xsl:sequence select="some $child in $elt/* satisfies (transpect:is-step($child))"/>
       </xsl:when>
       <xsl:otherwise>
