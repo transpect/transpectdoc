@@ -130,7 +130,7 @@ span.name {
     white-space:nowrap;
     display:block;
     position:relative;
-    bottom:-2em;
+    bottom:-3em;
     height:1em;  width:1em;
 }
 
@@ -140,4 +140,20 @@ span.name {
 
 .names {
   font-weight:bold;
+}
+
+.cases {
+  background-color:#fca;
+}
+
+.cond.even {
+  background-color:#fca;
+}
+
+.cond.odd {
+  background-color:#fdb;
+}
+
+.iteration {
+  background-color:#eef;
 }
