@@ -94,6 +94,16 @@ h2 {
   margin-bottom:0.5em;
 }
 
+#nav h3, #nav h4 {
+  margin-top:0.5em;
+  margin-bottom:0.2em;
+}
+
+#nav h2 {
+  margin-top:0.8em;
+  margin-bottom:0.4em;
+}
+
 p {
   margin-bottom:0;
   margin-top:0;
@@ -154,6 +164,22 @@ span.name {
   background-color:#fdb;
 }
 
-.iteration {
+.foreach {
   background-color:#eef;
+}
+
+.viewport {
+  background-color:#fde;
+}
+
+.group {
+  background-color:#dfb;
+}
+
+.try {
+  background-color:#cfa;
+}
+
+.catch {
+  background-color:#cfa;
 }

@@ -415,7 +415,7 @@
     </p>
   </xsl:template>
   
-  <xsl:template match="p:input/p:inline" mode="subpipeline">
+  <xsl:template match="p:inline" mode="subpipeline">
     <dl>
       <dt>inline</dt>
       <dd>
@@ -426,6 +426,11 @@
     </dl>
   </xsl:template>
 
+  <xsl:template match="p:viewport-source | p:iteration-source" mode="subpipeline">
+    <xsl:attribute name="id" select="concat('step_', ../@name, '_port_current')"/>
+    <xsl:apply-templates mode="#current"/>
+  </xsl:template>
+  
   <xsl:template match="p:pipe" mode="subpipeline">
     <p>
       <a href="#{string-join(('step', @step, 'port', @port), '_')}">
@@ -452,11 +457,9 @@
       </a>
     </p>
   </xsl:template>
-  
-  
 
   <xsl:template match="p:with-option" mode="subpipeline">
-    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../name())/p:option[@name = current()/@name]" as="element(*)"/>
+    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../name())/p:option[@name = current()/@name]" as="element(*)?"/>
     <p>
       <xsl:choose>
         <xsl:when test="exists($declaration)">
@@ -473,7 +476,7 @@
     </p>
   </xsl:template>
   
-  <xsl:template match="p:choose | p:otherwise | p:for-each" mode="subpipeline-environment">
+  <xsl:template match="p:choose | p:otherwise | p:for-each | p:try | p:catch | p:group" mode="subpipeline-environment">
     <xsl:value-of select="name()"/>
   </xsl:template>
 
@@ -534,14 +537,14 @@
     <xsl:sequence select="$process-children"/>
   </xsl:template>
 
-  <xsl:template match="p:for-each" mode="subpipeline">
+  <xsl:template match="p:for-each | p:group | p:viewport | p:try | p:catch" mode="subpipeline">
     <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
     <xsl:variable name="process-children" as="element(html:tr)*">
       <xsl:apply-templates select="*[transpect:is-step(.)]" mode="#current">
         <xsl:with-param name="depth" select="$depth - 1" tunnel="yes"/>
       </xsl:apply-templates>
     </xsl:variable>
-    <tr class="iteration">
+    <tr class="{replace(local-name(), '-', '')}">
       <td rowspan="{count($process-children) + 1}">
         <p class="rotate">
           <xsl:apply-templates select="." mode="subpipeline-environment"/>
@@ -558,7 +561,13 @@
         <xsl:apply-templates select="p:documentation" mode="#current"/>
       </td>
       <td>
-        <!-- render p:iteration-source here? -->
+        <xsl:apply-templates select="p:iteration-source | p:viewport-source" mode="#current"/>
+        <xsl:if test="self::p:catch">
+          <p>
+            <xsl:attribute name="id" select="concat('step_', @name, '_port_error')"/>
+            <xsl:text>error</xsl:text>
+          </p>
+        </xsl:if>
       </td>
       <td> 
         <!-- create some kind of common description for p:output here? -->

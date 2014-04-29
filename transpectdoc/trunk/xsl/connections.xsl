@@ -96,7 +96,6 @@
     </p:output>
   </xsl:template>
 
-  
   <xsl:template match="p:for-each[not(p:iteration-source)]" mode="make-primary-input-explicit">
     <p:iteration-source generated="true">
       <xsl:sequence select="transpect:default-readable-port(.)"/>
@@ -133,8 +132,11 @@
     <!-- p:for-each, p:choose, p:group or atomic step in a subpipeline -->
     <xsl:variable name="preceding-step" as="element()?" select="$context-or-wrapper/preceding-sibling::*[transpect:is-step(.)][1]"/>
     <!-- §§§ does is-step() also return true() for p:group, p:for-each, p:choose? -->
-    <xsl:variable name="preceding-steps-output-decl" as="element(p:output)?"
+    <xsl:variable name="preceding-steps-output-decl" as="element(p:output)*"
       select="key('primary-output-decl', $preceding-step/name(), root($context))"/>
+    <xsl:if test="count($preceding-steps-output-decl) gt 1">
+      <xsl:message select="'More than one primary output declaration in ', $preceding-steps-output-decl/.., ' ', base-uri($context), ': ', $preceding-steps-output-decl"></xsl:message>
+    </xsl:if>
     <xsl:choose>
       <xsl:when test="$preceding-steps-output-decl">
         <p:pipe step="{$preceding-step/@name}" port="{$preceding-steps-output-decl/@port}"/>
