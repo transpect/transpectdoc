@@ -31,7 +31,7 @@
   
   <xsl:template match="/*" priority="2">
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
-    <c:file source-type="{local-name()}" href="{base-uri()}">
+    <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri())}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="replace(base-uri(), $base-dir-uri-regex, '')"/>
       <xsl:if test="$project-relative-path ne base-uri()">
@@ -48,6 +48,11 @@
   <xsl:function name="transpect:basename" as="xs:string">
     <xsl:param name="href" as="xs:string"/>
     <xsl:sequence select="replace($href, '^.+/', '')"/>
+  </xsl:function>
+  
+  <xsl:function name="transpect:normalize-uri" as="xs:string">
+    <xsl:param name="uri" as="xs:string"/>
+    <xsl:sequence select="replace($uri, '^file:///', 'file:/')"/>
   </xsl:function>
 
   <xsl:template name="process-inner">
@@ -137,7 +142,7 @@
   </xsl:template>
   
   <xsl:template match="p:import">
-    <xsl:apply-templates select="doc(@href)">
+    <xsl:apply-templates select="doc(resolve-uri(@href, base-uri()))">
       <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>

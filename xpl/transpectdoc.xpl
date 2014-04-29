@@ -49,7 +49,9 @@
               static-base-uri(), 
               'transpectdoc/xpl(/.*)?$', 
               'doc'
-            )"/>
+            )">
+    <p:empty/>
+  </p:variable>
 
   <p:variable name="base-dir-uri-regex" 
     select="replace(
@@ -61,6 +63,7 @@
               '^file:/+',
               '^file:/+'
             )">
+    <p:empty/>
     <p:documentation xmlns="http://www.w3.org/1999/xhtml">
       <p><a href="https://twitter.com/westmaaan/status/447696882442043392/photo/1">Assumption</a>: 
         no regex reserved chars such as brackets or curly braces in static-base-uri()</p>
@@ -73,7 +76,9 @@
       <p:document href="lib/xproc-1.0.xpl"/>
     </p:input>
     <p:input port="parameters"><p:empty/></p:input>
-    <p:with-param name="base-dir-uri-regex" select="$base-dir-uri-regex"/>
+    <p:with-param name="base-dir-uri-regex" select="$base-dir-uri-regex">
+      <p:empty/>
+    </p:with-param>
     <p:input port="stylesheet">
       <p:pipe port="crawling-xslt" step="transpectdoc"/>
     </p:input>

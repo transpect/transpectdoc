@@ -20,10 +20,10 @@
                       ">
         <xsl:sequence select="false()"/>
       </xsl:when>
-      <xsl:when test="$elt/name() = ('p:choose', 'p:for-each', 'p:group', 'p:try')">
+      <xsl:when test="$elt/name() = ('p:choose', 'p:for-each', 'p:group', 'p:try', 'p:catch')">
         <xsl:sequence select="true()"/>
       </xsl:when>
-      <xsl:when test="$elt/name() = ('p:input', 'p:output', 'p:option', 'p:xpath-context', 'p:iteration-source')">
+      <xsl:when test="$elt/name() = ('p:input', 'p:output', 'p:option', 'p:xpath-context', 'p:iteration-source', 'p:empty')">
         <xsl:sequence select="false()"/>
       </xsl:when>
       <!-- pipeline declarations itself and their children (except for the list above)
