@@ -130,9 +130,12 @@ span.flag {
 span.name {
   font-weight:bold;
   font-style:italic;
-  color:#963;
+  color:#876;
 }
 
+span.count{
+  color:#666;
+}
 .rotate {
     writing-mode:bt-lr;
     transform:rotate(-90deg);
@@ -183,3 +186,72 @@ span.name {
 .catch {
   background-color:#cfa;
 }
+
+
+ul.nav p.toggle a:before {
+  content: "−";
+  color: #ffd;
+  background-color: #999;
+  padding: 0 0.2em;
+  margin-right: 0.4em;
+}
+
+ul.nav p.toggle a.fold:before {
+  content: "+";
+}
+
+ul.nav p.toggle {
+  margin-top:0.3em;
+}
+
+ul.nav p.toggle a{
+  font-weight:bold;
+  color:#542;
+}
+
+
+ul.nav p.toggle a:hover {
+  text-decoration:none;
+  color: #a50;
+}
+
+ul.nav p.level1 {
+  font-size:120%;
+}
+
+ul.nav p.level2 {
+  font-size:110%;
+}
+
+ul.nav p.level3 {
+  font-size:100%;
+}
+
+ul.nav, ul.nav ul {
+  padding-left:0;
+}
+
+ul.nav ul {
+  margin-left: 1.6em;
+}
+
+ul.nav li {
+  display:block;
+  margin-left:0;
+  padding-left:0;
+  text-indent:0;
+}
+
+a {
+  text-decoration:none;
+  color:#a50;
+}
+
+a:hover {
+  text-decoration:underline;
+}
+
+a:visited {
+  color: #962;
+}
+

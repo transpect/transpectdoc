@@ -12,7 +12,11 @@
   <xsl:include href="common.xsl"/>
 
   <xsl:param name="output-base-uri" select="'doc'"/>
-  <xsl:param name="project-name" select="replace($output-base-uri, '^.+/(.+?)/.+?(/|$)', '$1')"/>
+  <xsl:param name="project-name" as="xs:string?" />
+
+  <xsl:variable name="title" select="if (not($project-name) or $project-name = '') 
+                                     then tokenize($output-base-uri, '/')[not(. = ('doc', 'trunk', 'repo'))][last()]
+                                     else $project-name" as="xs:string"/>
 
   <xsl:template match="* | @*" mode="#default main-html">
     <xsl:copy>
@@ -70,14 +74,32 @@
         <head>
           <meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
           <link rel="stylesheet" type="text/css" href="transpectdoc.css"/>
+          <script src="jquery.js"></script>
+          <script src="highlight/highlight.pack.js"></script>
+          <script>hljs.initHighlightingOnLoad();</script>
+          <script type="text/javascript">
+            $(document).ready(function() {
+              $('p.toggle').siblings('ul').hide();
+              $('p.toggle').click(function () {
+                $(this).siblings('ul').slideToggle();
+                $(this).find('a').toggleClass('fold');
+              });
+              var page_id = $('body').attr('id');
+              var current_item = $('#nav_'+page_id+' a');
+              current_item.parentsUntil('ul.nav', 'ul').each(function () {
+                $(this).toggle();
+              });
+              current_item.css('color', '#f93');
+            });
+          </script>
           <title>
             <xsl:value-of select="string-join((@display-name, 'transpectdoc'), ' – ')"/>
           </title>
         </head>
-        <body>
+        <body id="{transpect:normalize-for-filename(@display-name)}">
           <div id="nav" class="macroblock">
             <h1>
-              <xsl:value-of select="$project-name"/>
+              <xsl:value-of select="$title"/>
             </h1>
             <xsl:call-template name="nav">
               <xsl:with-param name="page-name" tunnel="yes" select="$page-name"/>
@@ -99,41 +121,85 @@
   
   <xsl:template name="nav">
     <xsl:param name="page-name" tunnel="yes" as="xs:string"/>
-    <h2>Frontend Pipelines</h2>
-    <xsl:apply-templates select="//*[@front-end = 'true']" mode="links">
-      <xsl:with-param name="current" select="."/>
-      <xsl:with-param name="style" select="'type'"/>
-    </xsl:apply-templates>
-    <xsl:variable name="typed-steps" select="//*[@p:type]" as="element(*)*"/>
-    <xsl:variable name="used-steps" select="$typed-steps[key('used-step', @p:type)]"/>
-    <xsl:if test="exists($typed-steps)">
-      <h2>Step Declarations</h2>
-      <xsl:for-each-group select="$used-steps" group-by="@type-prefix">
-        <xsl:sort select="current-grouping-key()"/>
-        <h3>
-          <xsl:value-of select="concat(current-grouping-key(), ':…')"/>
-        </h3>
-        <xsl:for-each-group select="current-group()" 
-          group-by="(ancestor::c:file[@source-type = 'library']/@display-name, '')[1]">
-          <xsl:sort select="current-grouping-key()"/>
-          <xsl:choose>
-            <xsl:when test="current-grouping-key() = ''">
-              <xsl:apply-templates select="current-group()" mode="links">
+    <ul class="nav">
+      <li>
+        <p class="toggle level1" id="nav_frontend"><a class="fold">Frontend Pipelines</a>
+          <xsl:text>&#x2003;</xsl:text>
+          <span class="count">(<xsl:value-of select="count(//*[@front-end = 'true'])"/>)</span></p>
+        <ul>
+          <xsl:apply-templates select="//*[@front-end = 'true']" mode="links">
+            <xsl:with-param name="current" select="."/>
+            <xsl:with-param name="style" select="'type'"/>
+          </xsl:apply-templates>
+        </ul>
+      </li>
+      <xsl:variable name="typed-steps" select="//*[@p:type]" as="element(*)*"/>
+      <xsl:variable name="used-steps" select="$typed-steps[key('used-step', @p:type)]"/>
+      <xsl:if test="exists($typed-steps)">
+        <li>
+          <p class="toggle level1" id="nav_typedSteps">
+            <a class="fold">Step Declarations</a>
+            <xsl:text>&#x2003;</xsl:text>
+            <span class="count">(<xsl:value-of select="count(distinct-values($used-steps/@p:type))"/>)</span></p>
+          <ul>
+            <xsl:for-each-group select="$used-steps" group-by="@type-prefix">
+              <xsl:sort select="current-grouping-key()"/>
+              <li>
+                <p class="toggle level2" id="nav_namespaceSteps_{current-grouping-key()}">
+                  <a class="fold"><xsl:value-of select="concat(current-grouping-key(), ':…')"/></a>
+                  <xsl:text>&#x2003;</xsl:text>
+                  <span class="count">(<xsl:value-of select="count(current-group())"/>)</span>
+                </p>
+                <ul>
+                  <xsl:for-each-group select="current-group()"
+                    group-by="(ancestor::c:file[@source-type = 'library']/@display-name, '')[1]">
+                    <xsl:sort select="current-grouping-key()"/>
+                    <xsl:choose>
+                      <xsl:when test="current-grouping-key() = ''">
+                        <xsl:apply-templates select="current-group()" mode="links">
+                          <xsl:with-param name="style" select="'type'"/>
+                        </xsl:apply-templates>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <li>
+                          <p class="toggle level3">
+                            <a class="fold"><xsl:value-of select="current-grouping-key()"/></a>
+                            <xsl:text>&#x2003;</xsl:text>
+                            <span class="count">(<xsl:value-of select="count(current-group())"/>)</span>
+                          </p>
+                          <ul>
+                            <xsl:apply-templates select="current-group()" mode="links">
+                              <xsl:with-param name="style" select="'type'"/>
+                            </xsl:apply-templates>
+                          </ul>
+                        </li>
+                      </xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:for-each-group>
+                </ul>
+              </li>
+            </xsl:for-each-group>
+          </ul>
+        </li>
+      </xsl:if>
+
+      <xsl:variable name="examples" select="//*[@example-for]"/>
+      <xsl:if test="exists($examples)">
+        <li>
+          <p class="toggle level1"><a class="fold">Dynamic Evaluation Candidates</a>
+            <xsl:text>&#x2003;</xsl:text>
+            <span class="count">(<xsl:value-of select="count(distinct-values($examples/@project-relative-path))"/>)</span></p>
+          <ul>
+            <xsl:for-each-group select="$examples" group-by="@project-relative-path">
+              <xsl:sort select="current-grouping-key()"/>
+              <xsl:apply-templates select="." mode="links">
                 <xsl:with-param name="style" select="'type'"/>
               </xsl:apply-templates>
-            </xsl:when>
-            <xsl:otherwise>
-              <h4>
-                <xsl:value-of select="current-grouping-key()"/>
-              </h4>
-              <xsl:apply-templates select="current-group()" mode="links">
-                <xsl:with-param name="style" select="'type'"/>
-              </xsl:apply-templates>
-            </xsl:otherwise>
-          </xsl:choose>
-        </xsl:for-each-group>
-      </xsl:for-each-group>
-    </xsl:if>
+            </xsl:for-each-group>
+          </ul>
+        </li>
+      </xsl:if>
+    </ul>
   </xsl:template>
 
   <xsl:template match="*[@source-type = ('declare-step', 'pipeline', 'library')]" mode="main-html">
@@ -198,15 +264,17 @@
 
   <xsl:template match="*" mode="links">
     <xsl:param name="style" as="xs:string?"/>
-    <p class="nav">
-      <xsl:if test="not($style)">
-        <xsl:value-of select="@source-type"/>
-        <xsl:text> </xsl:text>        
-      </xsl:if>
-      <a href="{transpect:page-name(., ())}">
-        <xsl:value-of select="(@p:type[$style = 'type'], @display-name)[1]"/>
-      </a>
-    </p>
+    <li>
+      <p class="nav" id="nav_{transpect:normalize-for-filename(@display-name)}">
+        <xsl:if test="not($style)">
+          <xsl:value-of select="@source-type"/>
+          <xsl:text> </xsl:text>
+        </xsl:if>
+        <a href="{transpect:page-name(., ())}">
+          <xsl:value-of select="(@p:type[$style = 'type'], @display-name)[1]"/>
+        </a>
+      </p>
+    </li>
   </xsl:template>
 
   <xsl:template name="file-paths">

@@ -2,21 +2,39 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:c="http://www.w3.org/ns/xproc-step"
+  xmlns:cx="http://xmlcalabash.com/ns/extensions" 
+  xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
   xmlns:p="http://www.w3.org/ns/xproc"
+  xmlns:letex="http://www.le-tex.de/namespace"
   xmlns:transpect="http://www.le-tex.de/namespace/transpect"
-  exclude-result-prefixes="c xs transpect"
+  exclude-result-prefixes="c cx xs letex transpect"
   version="2.0">
+  
+  <xsl:import href="http://transpect.le-tex.de/xslt-util/xslt-based-catalog-resolver/resolve-uri-by-catalog.xsl"/>
   
   <xsl:include href="common.xsl"/>
 
-  <xsl:param name="base-dir-uri-regex" as="xs:string"/>
+  <xsl:param name="project-root-uri" as="xs:string"/>
+
+  <xsl:variable name="base-dir-uri-regex" as="xs:string" select="replace($project-root-uri, '^file:/+', 'file:/+')"/>
 
   <xsl:variable name="initial-base-uris" as="xs:string+" select="collection()/base-uri()[not(ends-with(., 'lib/xproc-1.0.xpl'))]"/>
 
+  <xsl:key name="by-href" match="*[@xml:id]" use="string-join((ancestor::*[transpect:is-step(.)][@href][1]/@href, @xml:id), '#')"/>
+
   <xsl:template name="main">
     <xsl:variable name="raw-list" as="element(c:file)*">
-      <xsl:apply-templates select="collection()"/>
+      <xsl:apply-templates select="collection()"/>    
     </xsl:variable>
+    <!--<xsl:variable name="plus-examples" as="element(c:file)*">
+      <xsl:sequence select="$raw-list/c:files/c:file"/>
+      <xsl:variable name="dynamic-pipelines" as="element(p:input)*" select="for $for in $raw-list/descendant::p:pipeinfo/transpect:examples/@for 
+        return key('by-href', letex:resolve-uri-by-catalog($for, document('http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml')), $raw-list)"/>
+      <xsl:message select="count($dynamic-pipelines), for $for in $raw-list/descendant::p:pipeinfo/transpect:examples/@for 
+        return letex:resolve-uri-by-catalog($for, document('http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml'))"></xsl:message>
+      <xsl:apply-templates select="$dynamic-pipelines"/>
+      <xsl:message select="for $k in $raw-list//*[@xml:id] return $k/ancestor::*[transpect:is-step(.)]"></xsl:message>
+    </xsl:variable>-->
     <xsl:variable name="consolidate-by-href" as="element(c:file)*">
       <xsl:for-each-group select="$raw-list" group-by="@href">
         <xsl:sequence select="."/>
@@ -42,8 +60,36 @@
       </xsl:if>
       <xsl:call-template name="process-inner"/>
     </c:file>
-    <xsl:apply-templates select="p:import"/>
+    <xsl:apply-templates select="p:import">
+      <xsl:with-param name="example-for" select="()" tunnel="yes"/>
+    </xsl:apply-templates>
+    <!--<xsl:apply-templates select="for $coll in descendant::transpect:examples/transpect:collection 
+      return collection(letex:resolve-uri-by-catalog($coll/@uri, document('http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml')))"/>-->
+    <xsl:for-each select="descendant::*:examples/*:collection">
+      <xsl:apply-templates select="transpect:find-in-dir(
+                                     @dir-uri, 
+                                     @file, 
+                                     document('http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml')
+                                   )">
+        <xsl:with-param name="example-for" select="@file" tunnel="yes"/>
+      </xsl:apply-templates>  
+    </xsl:for-each>
   </xsl:template>
+
+  <xsl:function name="transpect:find-in-dir" as="document-node(element(*))*">
+    <xsl:param name="dir-uri" as="xs:string"/>
+    <xsl:param name="file-name-with-local-dir" as="xs:string"/> 
+    <xsl:param name="catalog" as="document-node(element(cat:catalog))?"/>
+    <xsl:variable name="file-name" select="replace($file-name-with-local-dir, '^.+/', '')" as="xs:string"/>
+    <xsl:variable name="collection-uri" select="concat(
+                                                  if ($catalog) 
+                                                  then letex:resolve-uri-by-catalog($dir-uri, $catalog) 
+                                                  else $dir-uri,
+                                                  '/?select=', $file-name, 
+                                                  ';recurse=yes'
+                                                )"/>
+    <xsl:sequence select="collection($collection-uri)[contains(base-uri(), $file-name-with-local-dir)]"/>
+  </xsl:function>
 
   <xsl:function name="transpect:basename" as="xs:string">
     <xsl:param name="href" as="xs:string"/>
@@ -56,6 +102,7 @@
   </xsl:function>
 
   <xsl:template name="process-inner">
+    <xsl:param name="example-for" as="xs:string?" tunnel="yes"/>
     <xsl:copy-of select="@name"/>
     <xsl:apply-templates select="@type"/>
     <xsl:if test="not(@name) and transpect:is-step(.)">
@@ -67,12 +114,19 @@
                   (base-uri() = $initial-base-uris)">
       <xsl:attribute name="front-end" select="'true'"/>
     </xsl:if>
+    <xsl:if test="$example-for">
+      <xsl:attribute name="example-for" select="$example-for"/>
+    </xsl:if>
     <xsl:attribute name="display-name">
       <xsl:choose>
         <xsl:when test="local-name() = ('declare-step', 'pipeline')">
           <xsl:value-of select="if (@type) 
                                 then @type 
-                                else concat('[anonymous] ', replace(transpect:basename(base-uri()), '\.[^.]+$', ''))"/>
+                                else concat('[anon', 
+                                            if ($example-for) then ' dyn' else '',
+                                            '] ', 
+                                            replace(($example-for, transpect:basename(base-uri()))[1], '\.[^.]+$', '')
+                                           )"/>
           <xsl:if test="parent::p:library">
             <xsl:text> (in library </xsl:text>
             <xsl:value-of select="transpect:basename(base-uri())"/>
@@ -98,12 +152,11 @@
   <xsl:template match="@*">
     <xsl:copy/>
   </xsl:template>
-  
+
   <xsl:template match="*">
-    <xsl:comment>huchzi</xsl:comment>
     <xsl:copy-of select="."/>
   </xsl:template>
-
+  
   <xsl:template match="*[transpect:is-step(.)]
                         [not(@name)]">
     <xsl:copy>
