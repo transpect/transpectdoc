@@ -152,6 +152,10 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="target" select="concat($output-base-uri, '/jquery.js')"/>
   </cxf:copy>
   
+  <cxf:copy href="../js/transpectdoc.js">
+    <p:with-option name="target" select="concat($output-base-uri, '/transpectdoc.js')"/>
+  </cxf:copy>
+
   <letex:unzip name="unzip-highlight-js" overwrite="yes">
     <p:with-option name="zip" select="replace(
                                         resolve-uri('../lib/highlight.zip', static-base-uri()), 

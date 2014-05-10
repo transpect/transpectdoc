@@ -77,21 +77,7 @@
           <script src="jquery.js"></script>
           <script src="highlight/highlight.pack.js"></script>
           <script>hljs.initHighlightingOnLoad();</script>
-          <script type="text/javascript">
-            $(document).ready(function() {
-              $('p.toggle').siblings('ul').hide();
-              $('p.toggle').click(function () {
-                $(this).siblings('ul').slideToggle();
-                $(this).find('a').toggleClass('fold');
-              });
-              var page_id = $('body').attr('id');
-              var current_item = $('#nav_'+page_id+' a');
-              current_item.parentsUntil('ul.nav', 'ul').each(function () {
-                $(this).toggle();
-              });
-              current_item.css('color', '#f93');
-            });
-          </script>
+          <script type="text/javascript" src="transpectdoc.js"></script>
           <title>
             <xsl:value-of select="string-join((@display-name, 'transpectdoc'), ' – ')"/>
           </title>
@@ -461,8 +447,8 @@
     </tr>
   </xsl:template>
   
-  <xsl:template match="p:documentation" mode="subpipeline">
-    <xsl:apply-templates mode="#current"/>
+  <xsl:template match="p:documentation" mode="subpipeline" priority="2">
+    <xsl:sequence select="node()"/>
   </xsl:template>
   
   <xsl:template match="p:input" mode="subpipeline">
