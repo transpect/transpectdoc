@@ -530,7 +530,7 @@
     </p>
   </xsl:template>
   
-  <xsl:template match="p:choose | p:otherwise | p:for-each | p:try | p:catch | p:group" mode="subpipeline-environment">
+  <xsl:template match="p:choose | p:otherwise | p:for-each | p:try | p:catch | p:group | p:viewport" mode="subpipeline-environment">
     <xsl:value-of select="name()"/>
   </xsl:template>
 
