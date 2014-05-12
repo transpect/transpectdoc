@@ -235,15 +235,19 @@
               <p class="none">none</p>
             </xsl:otherwise>
           </xsl:choose>
-        </div>    
-        <div class="use">
-          <h3>Used by</h3>
-          <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]"
-            group-by="@display-name">
-            <xsl:sort select="current-grouping-key()"/>
-            <xsl:apply-templates select="." mode="links"/>  
-          </xsl:for-each-group>
         </div>
+        <xsl:if test="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]">
+          <div class="use">
+            <h3>Used by</h3>
+            <ul>
+              <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]"
+                group-by="@display-name">
+                <xsl:sort select="current-grouping-key()"/>
+                <xsl:apply-templates select="." mode="links"/>  
+              </xsl:for-each-group>
+            </ul>
+          </div>
+        </xsl:if>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -332,12 +336,12 @@
             <xsl:value-of select="@port"/>
           </span>
           <xsl:if test="@primary = 'true'">
-            <span class="flag primary">
+            <span class="flag primary" title="Primary port">
               <xsl:value-of select="'Ⓟ'"/>
             </span>
           </xsl:if>
           <xsl:if test="@sequence = 'true'">
-            <span class="flag sequence">
+            <span class="flag sequence" title="Accepts a sequence of documents">
               <xsl:value-of select="'Ⓢ'"/>
             </span>
           </xsl:if>
@@ -359,7 +363,7 @@
             <xsl:value-of select="@name"/>
           </span>
           <xsl:if test="@required = 'true'">
-            <span class="flag required">
+            <span class="flag required" title="Required">
               <xsl:value-of select="'&#x24c7;'"/>
             </span>
           </xsl:if>
@@ -564,8 +568,11 @@
         </xsl:otherwise>
       </xsl:choose>
       <td rowspan="{count($process-children) + 1}">
-        <p class="rotate">
+        <xsl:variable name="subpipeline-environment" as="xs:string+">
           <xsl:apply-templates select="." mode="subpipeline-environment"/>
+        </xsl:variable>
+        <p class="rotate" title="{$subpipeline-environment}">
+          <xsl:sequence select="$subpipeline-environment"/>
           <xsl:if test="@name">
             <xsl:text xml:space="preserve"> </xsl:text>
             <span class="name{if (@generated-name = 'true') then ' generated' else ''}" id="step_{@name}">
@@ -600,8 +607,11 @@
     </xsl:variable>
     <tr class="{replace(local-name(), '-', '')}">
       <td rowspan="{count($process-children) + 1}">
-        <p class="rotate">
+        <xsl:variable name="subpipeline-environment" as="xs:string+">
           <xsl:apply-templates select="." mode="subpipeline-environment"/>
+        </xsl:variable>
+        <p class="rotate" title="{$subpipeline-environment}">
+          <xsl:sequence select="$subpipeline-environment"/>
           <xsl:if test="@name">
             <xsl:text xml:space="preserve"> </xsl:text>
             <span class="name{if (@generated-name = 'true') then ' generated' else ''}" id="step_{@name}">
