@@ -144,15 +144,18 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     </p:store>
   </p:for-each>
   
-  <cxf:copy href="../css/transpectdoc.css">
+  <cxf:copy>
+    <p:with-option name="href" select="resolve-uri('../css/transpectdoc.css', static-base-uri())"/>
     <p:with-option name="target" select="concat($output-base-uri, '/transpectdoc.css')"/>
   </cxf:copy>
 
-  <cxf:copy href="../lib/jquery-2.1.1.min.js">
+  <cxf:copy>
+    <p:with-option name="href" select="resolve-uri('../lib/jquery-2.1.1.min.js', static-base-uri())"/>
     <p:with-option name="target" select="concat($output-base-uri, '/jquery.js')"/>
   </cxf:copy>
   
-  <cxf:copy href="../js/transpectdoc.js">
+  <cxf:copy>
+    <p:with-option name="href" select="resolve-uri('../js/transpectdoc.js', static-base-uri())"/>
     <p:with-option name="target" select="concat($output-base-uri, '/transpectdoc.js')"/>
   </cxf:copy>
 
