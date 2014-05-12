@@ -23,6 +23,8 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
 		$(call uri,transpectdoc/xpl/transpectdoc.xpl) \
 		debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)
 </pre>
+    <p>Set the svn property <var>svn:mime-type</var> for the transpectdoc.css in your documentation 
+    output directory to <kbd>text/css</kbd>, if you want to view the generated documentation online, not only locally.</p>
     <p>For customizing transpectdoc, there are three XSLT passes whose templates etc. may be overridden by specifying, e.g.:</p>
     <pre>		-i crawling-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-crawl.xsl) \
 		-i connections-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-connections.xsl) \
