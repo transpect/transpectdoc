@@ -29,8 +29,11 @@ body {
 .block table {
   border-collapse:collapse;
   border-width:1pt;
-  background-color:#ffd;
   width:100%;
+}
+
+.block table, .block > p, .block > ul {
+    background-color:#ffd;
 }
 
 .block table td {
@@ -52,6 +55,10 @@ div.option {
 div.subpipeline {
   background-color:#eda;
   overflow-x:scroll;
+}
+
+div.use {
+  background-color:#fc8;
 }
 
 td, th {
@@ -187,21 +194,31 @@ span.count{
   background-color:#cfa;
 }
 
+.toggle a, toggle a:hover {
+  text-decoration: none;
+}
 
-ul.nav p.toggle a:before {
-  content: "−";
+.toggle a:before {
   color: #ffd;
-  background-color: #999;
-  padding: 0 0.2em;
+  background-color: #765;
+  padding: 0 0.25em 0.1em 0.2em;
   margin-right: 0.4em;
 }
 
-ul.nav p.toggle a.fold:before {
+.toggle a:before {
+  content: "−";
+}
+
+.toggle a.fold:before {
   content: "+";
 }
 
+.pointer { cursor:pointer }
+
 ul.nav p.toggle {
   margin-top:0.3em;
+  text-indent: -1.35em;
+  margin-left: 1.35em;
 }
 
 ul.nav p.toggle a{
@@ -242,6 +259,14 @@ ul.nav li {
   text-indent:0;
 }
 
+.current, .current:hover {
+  border: #f31 solid 0.1em;
+  background-color: #feb;
+  padding:0 0.2em;
+  margin:0.1em;
+  text-decoration:none;
+}
+
 a {
   text-decoration:none;
   color:#a50;
@@ -255,3 +280,6 @@ a:visited {
   color: #962;
 }
 
+#main h3.toggle a, #main h3.toggle a:visited {
+ color: black; 
+}
