@@ -122,11 +122,11 @@
         <xsl:when test="local-name() = ('declare-step', 'pipeline')">
           <xsl:value-of select="if (@type) 
                                 then @type 
-                                else concat('[anon', 
-                                            if ($example-for) then ' dyn' else '',
-                                            '] ', 
-                                            replace(($example-for, transpect:basename(base-uri()))[1], '\.[^.]+$', '')
-                                           )"/>
+                                else concat(
+                                  replace(($example-for, transpect:basename(base-uri()))[1], '\.[^.]+$', ''),
+                                  ' Ⓐ',
+                                  if ($example-for) then 'Ⓓ' else ''
+                                )"/>
           <xsl:if test="parent::p:library">
             <xsl:text> (in library </xsl:text>
             <xsl:value-of select="transpect:basename(base-uri())"/>
