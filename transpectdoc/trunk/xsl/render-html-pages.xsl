@@ -43,7 +43,7 @@
 
   <xsl:function name="transpect:normalize-for-filename" as="xs:string">
     <xsl:param name="name" as="xs:string"/>
-    <xsl:sequence select="replace(replace(replace($name, '\s+\(.+\)', ''), '[(\[\])]', ''), '[^-\w._]+', '_', 'i')"/>
+    <xsl:sequence select="replace(replace($name, ':', '_'), '(\s+\(.+\)|[^-0-9a-z_]+)', '', 'i')"/>
   </xsl:function>
 
   <xsl:function name="transpect:page-name" as="xs:string">
@@ -193,9 +193,42 @@
     </ul>
   </xsl:template>
 
+  <xsl:function name="transpect:render-display-name" as="node()*">
+    <xsl:param name="input" as="xs:string"/>
+    <xsl:analyze-string select="$input" regex="[ⒶⒹⓅⓇⓈ]">
+      <xsl:matching-substring>
+        <span>
+          <xsl:attribute name="title">
+            <xsl:choose>
+              <xsl:when test=". = 'Ⓐ'">
+                <xsl:sequence select="'anonymous – this step has no type'"/>
+              </xsl:when>
+              <xsl:when test=". = 'Ⓓ'">
+                <xsl:sequence select="'dynamic – this is an example for a dynamically loaded or generated pipeline'"/>
+              </xsl:when>
+              <xsl:when test=". = 'Ⓟ'">
+                <xsl:sequence select="'primary port'"/>
+              </xsl:when>
+              <xsl:when test=". = 'Ⓡ'">
+                <xsl:sequence select="'required option'"/>
+              </xsl:when>
+              <xsl:when test=". = 'Ⓢ'">
+                <xsl:sequence select="'sequence – zero to many documents are allowed on this port'"/>
+              </xsl:when>
+            </xsl:choose>
+          </xsl:attribute>
+          <xsl:value-of select="."/>
+        </span>
+      </xsl:matching-substring>
+      <xsl:non-matching-substring>
+        <xsl:value-of select="."/>
+      </xsl:non-matching-substring>
+    </xsl:analyze-string>
+  </xsl:function>
+
   <xsl:template match="*[@source-type = ('declare-step', 'pipeline', 'library')]" mode="main-html">
     <h2>
-      <xsl:value-of select="replace(@display-name, concat('\s+', @name, '$'), '')"/>
+      <xsl:sequence select="transpect:render-display-name(replace(@display-name, concat('\s+', @name, '$'), ''))"/>
       <xsl:if test="@name">
         <xsl:text xml:space="preserve"> </xsl:text>
         <span class="name{if (@generated-name = 'true') then ' generated' else ''}" id="step_{@name}">
@@ -276,7 +309,7 @@
           <xsl:text> </xsl:text>
         </xsl:if>
         <a href="{transpect:page-name(., ())}">
-          <xsl:value-of select="(@p:type[$style = 'type'], @display-name)[1]"/>
+          <xsl:sequence select="transpect:render-display-name((@p:type[$style = 'type'], @display-name)[1])"/>
         </a>
       </p>
     </li>
