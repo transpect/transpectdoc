@@ -43,7 +43,7 @@
 
   <xsl:function name="transpect:normalize-for-filename" as="xs:string">
     <xsl:param name="name" as="xs:string"/>
-    <xsl:sequence select="replace(replace($name, '[(\[\])]', ''), '[^-\w._]+', '_', 'i')"/>
+    <xsl:sequence select="replace(replace(replace($name, '\s+\(.+\)', ''), '[(\[\])]', ''), '[^-\w._]+', '_', 'i')"/>
   </xsl:function>
 
   <xsl:function name="transpect:page-name" as="xs:string">
@@ -82,7 +82,7 @@
             <xsl:value-of select="string-join((@display-name, 'transpectdoc'), ' – ')"/>
           </title>
         </head>
-        <body id="{transpect:normalize-for-filename(@display-name)}">
+        <body id="{transpect:normalize-for-filename(@display-name)}" >
           <div id="nav" class="macroblock">
             <h1>
               <xsl:value-of select="$title"/>
@@ -109,7 +109,7 @@
     <xsl:param name="page-name" tunnel="yes" as="xs:string"/>
     <ul class="nav">
       <li>
-        <p class="toggle level1" id="nav_frontend"><a class="fold">Frontend Pipelines</a>
+        <p class="toggle level1" id="nav_frontend"><a class="fold pointer">Frontend Pipelines</a>
           <xsl:text>&#x2003;</xsl:text>
           <span class="count">(<xsl:value-of select="count(//*[@front-end = 'true'])"/>)</span></p>
         <ul>
@@ -124,15 +124,18 @@
       <xsl:if test="exists($typed-steps)">
         <li>
           <p class="toggle level1" id="nav_typedSteps">
-            <a class="fold">Step Declarations</a>
+            <a class="fold pointer">Step Declarations</a>
             <xsl:text>&#x2003;</xsl:text>
-            <span class="count">(<xsl:value-of select="count(distinct-values($used-steps/@p:type))"/>)</span></p>
+            <span class="count">(<xsl:value-of select="count(distinct-values($used-steps/@p:type))"/>)</span>
+          </p>
           <ul>
             <xsl:for-each-group select="$used-steps" group-by="@type-prefix">
               <xsl:sort select="current-grouping-key()"/>
               <li>
                 <p class="toggle level2" id="nav_namespaceSteps_{current-grouping-key()}">
-                  <a class="fold"><xsl:value-of select="concat(current-grouping-key(), ':…')"/></a>
+                  <a class="fold pointer">
+                    <xsl:value-of select="concat(current-grouping-key(), ':…')"/>
+                  </a>
                   <xsl:text>&#x2003;</xsl:text>
                   <span class="count">(<xsl:value-of select="count(current-group())"/>)</span>
                 </p>
@@ -149,7 +152,9 @@
                       <xsl:otherwise>
                         <li>
                           <p class="toggle level3">
-                            <a class="fold"><xsl:value-of select="current-grouping-key()"/></a>
+                            <a class="fold pointer">
+                              <xsl:value-of select="current-grouping-key()"/>
+                            </a>
                             <xsl:text>&#x2003;</xsl:text>
                             <span class="count">(<xsl:value-of select="count(current-group())"/>)</span>
                           </p>
@@ -172,7 +177,7 @@
       <xsl:variable name="examples" select="//*[@example-for]"/>
       <xsl:if test="exists($examples)">
         <li>
-          <p class="toggle level1"><a class="fold">Dynamic Evaluation Candidates</a>
+          <p class="toggle level1"><a class="fold pointer">Dynamic Evaluation Candidates</a>
             <xsl:text>&#x2003;</xsl:text>
             <span class="count">(<xsl:value-of select="count(distinct-values($examples/@project-relative-path))"/>)</span></p>
           <ul>
@@ -217,7 +222,7 @@
           <xsl:call-template name="option-declarations"/>
         </div>
         <div class="subpipeline block">
-          <h3>Subpipeline</h3>
+          <h3 class="toggle"><a class="pointer">Subpipeline</a></h3>
           <xsl:variable name="subpipeline" as="element(*)*" 
             select="*[transpect:is-step(.)] | p:documentation[preceding-sibling::*[transpect:is-step(.)]] "/>
           <xsl:choose>
@@ -237,15 +242,25 @@
           </xsl:choose>
         </div>
         <xsl:if test="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]">
-          <div class="use">
-            <h3>Used by</h3>
-            <ul>
+          <div class="interface block use">
+            <h3 class="toggle"><a class="pointer">Used by</a></h3>
+            <xsl:variable name="using-steps" as="element(*)*">
               <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]"
                 group-by="@display-name">
                 <xsl:sort select="current-grouping-key()"/>
                 <xsl:apply-templates select="." mode="links"/>  
               </xsl:for-each-group>
-            </ul>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="exists($using-steps)">
+                <ul>
+                  <xsl:sequence select="$using-steps"/>
+                </ul>
+              </xsl:when>
+              <xsl:otherwise>
+                <p class="none">none</p>                
+              </xsl:otherwise>
+            </xsl:choose>
           </div>
         </xsl:if>
       </xsl:otherwise>
@@ -280,21 +295,21 @@
   </xsl:template>
 
   <xsl:template name="input-declarations">
-    <h3>Input Ports</h3>
+    <h3 class="toggle"><a class="pointer">Input Ports</a></h3>
     <xsl:call-template name="interface-items">
       <xsl:with-param name="items" select="p:input"/>
     </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="output-declarations">
-    <h3>Output Ports</h3>
+    <h3 class="toggle"><a class="pointer">Output Ports</a></h3>
     <xsl:call-template name="interface-items">
       <xsl:with-param name="items" select="p:output"/>
     </xsl:call-template>
   </xsl:template>
   
   <xsl:template name="option-declarations">
-    <h3>Options</h3>
+    <h3 class="toggle"><a class="pointer">Options</a></h3>
     <xsl:call-template name="interface-items">
       <xsl:with-param name="items" select="p:option"/>
     </xsl:call-template>

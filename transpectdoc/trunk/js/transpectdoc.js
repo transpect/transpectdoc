@@ -1,7 +1,7 @@
 $(document).ready(function() {
-  $('p.toggle').siblings('ul').hide();
-  $('p.toggle').click(function () {
-    $(this).siblings('ul').slideToggle();
+  $('p.toggle').siblings().hide();
+  $('.toggle').click(function () {
+    $(this).siblings().slideToggle();
     $(this).find('a').toggleClass('fold');
   });
   var page_id = $('body').attr('id');
@@ -10,7 +10,7 @@ $(document).ready(function() {
     $(this).toggle();
   });
   current_item.parentsUntil('ul.nav', 'li').each(function () {
-  $(this).find('> p a').toggleClass('fold');
+    $(this).find('> p a').toggleClass('fold');
   });
-  current_item.css('color', '#f93');
+  current_item.toggleClass('current');
 });
