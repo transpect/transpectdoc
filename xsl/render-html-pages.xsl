@@ -102,7 +102,7 @@
   <xsl:variable name="built-in-prefixes" select="('p', 'pxf', 'pos', 'ml', 'cxu', 'cxo', 'cx', 'cxf', 'c')" as="xs:string+"/>
 
   <xsl:key name="used-step" use="name()" 
-    match="*[not(prefix-from-QName(node-name(.)) = $built-in-prefixes)]"/>
+    match="*"/><!-- filter it? [not(prefix-from-QName(node-name(.)) = $built-in-prefixes)] -->
   <xsl:key name="step-declaration-by-type" use="@p:type" match="*[@p:type]"/>
   
   <xsl:template name="nav">
