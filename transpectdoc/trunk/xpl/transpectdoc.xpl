@@ -175,6 +175,12 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     </p:store>
   </p:for-each>
   
+  <cxf:mkdir>
+    <p:documentation>Always create the output directory. 
+      Otherwise (i.e. first time) a java.io.FileNotFoundException will raise.</p:documentation>
+    <p:with-option name="href" select="$output-base-uri"/>
+  </cxf:mkdir>
+
   <cxf:copy>
     <p:with-option name="href" select="resolve-uri('../css/transpectdoc.css', static-base-uri())"/>
     <p:with-option name="target" select="concat($output-base-uri, '/transpectdoc.css')"/>
