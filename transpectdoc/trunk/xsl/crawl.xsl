@@ -154,7 +154,14 @@
   </xsl:template>
 
   <xsl:template match="*">
+    <xsl:comment>just copied</xsl:comment>
     <xsl:copy-of select="."/>
+  </xsl:template>
+  
+  <xsl:template match="p:when | p:otherwise">
+    <xsl:copy>
+      <xsl:apply-templates select="@*, node()"/>
+    </xsl:copy>
   </xsl:template>
   
   <xsl:template match="*[transpect:is-step(.)]

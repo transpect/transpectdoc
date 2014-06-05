@@ -50,12 +50,12 @@
                                                     or 
                                                     (count(../p:input) eq 1 and not(@primary = 'false'))]
                                                    [../@p:type]" use="../@p:type"/>
-  <xsl:key name="primary-output-decl" match="p:output[@primary eq 'true'][../@p:type]" use="../@p:type"/>
+  <xsl:key name="primary-output-decl" match="p:output[(@primary = 'true') or (count(../p:output) = 1)][../@p:type]" use="../@p:type"/>
 
   <!-- For steps in subpipelines, Make primary inputs and outputs explicit: --> 
   <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]">
     <xsl:copy>
-      <xsl:attribute name="p:is-step" select="transpect:is-step(.)"/>
+      <xsl:attribute name="p:is-step" select="'true'"/>
       <xsl:variable name="keep" select="@name, @generated-name, @cx:*" as="attribute(*)*"/>
       <xsl:apply-templates select="$keep"/>
       <xsl:apply-templates select="@* except $keep" mode="make-with-option"/>
@@ -89,11 +89,23 @@
   <xsl:template match="*[transpect:is-step(.)]
                         [not(@source-type = ('declare-step', 'pipeline'))]
                         [exists(key('primary-output-decl', name()))]
-                        [not(p:output/@port = key('primary-output-decl', name())/@port)]" 
+                        [count(key('primary-output-decl', name())/../p:output) = 1
+                         or 
+                         not(p:output/@port = key('primary-output-decl', name())/@port)
+                        ]" 
                 mode="make-primary-output-explicit">
     <p:output generated="true">
       <xsl:copy-of select="key('primary-output-decl', name())/@port"/>
     </p:output>
+  </xsl:template>
+  
+  <!-- the only output port declaration is primary by definition -->
+  <xsl:template match="p:output[../@source-type = ('declare-step', 'pipeline')][count(../p:output) = 1]">
+    <xsl:copy>
+      <xsl:copy-of select="@*"/>
+      <xsl:attribute name="primary" select="'true'"/>
+      <xsl:copy-of select="*"/>
+    </xsl:copy>
   </xsl:template>
 
   <xsl:template match="p:for-each[not(p:iteration-source)]" mode="make-primary-input-explicit">
