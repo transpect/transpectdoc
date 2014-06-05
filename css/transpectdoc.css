@@ -58,11 +58,30 @@ div.subpipeline {
 }
 
 div.use {
-  background-color:#fc8;
+  border: 0.15em solid #eda;
+  
+}
+
+
+div.use ul {
+  list-style-type: none;
+  padding:0.2em;
+  margin:0;
+  border: 0.15em solid #eda;
+}
+
+ul.connections {
+  list-style-type: none;
+  padding:0.2em;
+  margin:0;
 }
 
 td, th {
   padding:0.3em;
+}
+
+td {
+  vertical-align:top;
 }
 
 th {
@@ -84,6 +103,7 @@ col.connect {
 
 .none {
   font-style:italic;
+  padding:0.2em;
 }
 
 h1 {
@@ -150,7 +170,7 @@ span.count{
     white-space:nowrap;
     display:block;
     position:relative;
-    bottom:-3em;
+    bottom:-6em;
     height:1em;  width:1em;
 }
 
@@ -194,7 +214,7 @@ span.count{
   background-color:#cfa;
 }
 
-.toggle a, toggle a:hover {
+.toggle a, .toggle a:hover {
   text-decoration: none;
 }
 
@@ -282,4 +302,13 @@ a:visited {
 
 #main h3.toggle a, #main h3.toggle a:visited {
  color: black; 
+}
+
+tr.local-end > td {
+  border-bottom: 0.1em solid red;
+}
+
+dd {
+  text-indent:-0.75em;
+  margin-left:1.5em;
 }

@@ -16,6 +16,7 @@
                                      'p:serialization',
                                      'p:input', 
                                      'p:output',
+                                     'p:variable',
                                      'p:documentation')
                       ">
         <xsl:sequence select="false()"/>

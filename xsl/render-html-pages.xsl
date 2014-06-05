@@ -14,6 +14,8 @@
   <xsl:param name="output-base-uri" select="'doc'"/>
   <xsl:param name="project-name" as="xs:string?" />
 
+  <xsl:key name="transpect:step" match="*[@p:is-step = 'true']" use="name()"/>
+
   <xsl:variable name="title" select="if (not($project-name) or $project-name = '') 
                                      then tokenize($output-base-uri, '/')[not(. = ('doc', 'trunk', 'repo'))][last()]
                                      else $project-name" as="xs:string"/>
@@ -50,8 +52,8 @@
     <xsl:param name="elt" as="element(*)"/>
     <xsl:param name="output-base-uri" as="xs:string?"/>
     <xsl:variable name="fragment" as="xs:string"
-      select="if ($elt/name() = ('p:option', 'p:input', 'p:output'))
-              then concat('#', local-name($elt), '_', $elt/@name)
+      select="if ($elt/@name and not($elt/@source-type))
+              then concat('#', if($elt/@p:is-step = 'true') then 'step' else local-name($elt), '_', $elt/@name)
               else ''"/>
     <xsl:sequence select="concat(if ($output-base-uri)
                                  then concat($output-base-uri, '/')
@@ -239,7 +241,7 @@
     <xsl:call-template name="file-paths"/>
     <!-- main documentation -->
     <xsl:apply-templates mode="#current"
-      select="p:documentation[not(preceding-sibling::*[transpect:is-step(.)])]"/>
+      select="p:documentation[not(preceding-sibling::*[@p:is-step = 'true'])]"/>
     <xsl:choose>
       <xsl:when test="@source-type = 'library'">
         <xsl:apply-templates select="c:step-declarations/c:step-declaration" mode="links"/>
@@ -257,14 +259,14 @@
         <div class="subpipeline block">
           <h3 class="toggle"><a class="pointer">Subpipeline</a></h3>
           <xsl:variable name="subpipeline" as="element(*)*" 
-            select="*[transpect:is-step(.)] | p:documentation[preceding-sibling::*[transpect:is-step(.)]] "/>
+            select="*[@p:is-step = 'true'] | p:variable | p:documentation[preceding-sibling::*[@p:is-step = 'true']] "/>
           <xsl:choose>
             <xsl:when test="exists($subpipeline)">
               <xsl:call-template name="subpipeline-top">
                 <xsl:with-param name="subpipeline" select="$subpipeline"/>
                 <xsl:with-param name="depth" tunnel="yes" as="xs:integer" 
                   select="xs:integer(
-                            max(for $s in descendant-or-self::*[transpect:is-step(.)] return count($s/ancestor::*))
+                            max(for $s in descendant-or-self::*[@p:is-step = 'true'] return count($s/ancestor::*))
                             - count(ancestor::*)
                           )" />
               </xsl:call-template>
@@ -399,10 +401,45 @@
       <td>
         <xsl:apply-templates select="p:documentation" mode="#current"/>
       </td>
-      <td><p>connections…</p></td>
+      <td>
+        <xsl:apply-templates select="." mode="connections"/>
+      </td>
     </tr>
   </xsl:template>
   
+  <xsl:template match="p:input" mode="connections">
+    <!-- context: p:input in a step declaration -->
+    <xsl:variable name="pipes" as="element(p:pipe)*"
+      select="key('transpect:step', current()/../@p:type)/p:input[@port = current()/@port]/p:pipe"/>
+    <xsl:variable name="connection-list-items" as="element(html:li)*">
+      <xsl:apply-templates mode="#current" select="$pipes"/>
+    </xsl:variable>
+    <xsl:if test="exists($connection-list-items)">
+      <ul class="connections">
+        <xsl:sequence select="$connection-list-items"/>
+      </ul>
+    </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="p:input/p:pipe" mode="connections">
+    <!-- p:input in a connection --> 
+    <xsl:variable name="connected-to" as="element(*)" 
+      select="ancestor::*[@source-type = 'declare-step']
+                /descendant-or-self::*[not(name() = ('p:option', 'p:param', 'p:with-option', 'p:with-param'))]
+                                      [@name = current()/@step]"/>
+    <li>
+      <a href="{transpect:page-name($connected-to, $output-base-uri)}">
+        <xsl:value-of select="transpect:render-display-name(ancestor::*[@source-type = 'declare-step']/@display-name)"/>
+        <xsl:text>/</xsl:text>
+        <xsl:value-of select="$connected-to/name()"/>
+        <xsl:text> </xsl:text>
+        <span class="name">
+          <xsl:value-of select="$connected-to/@name"/>
+        </span>
+      </a>
+    </li>
+  </xsl:template>
+
   <xsl:template match="p:option" mode="main-html">
     <tr>
       <td>
@@ -466,6 +503,9 @@
   <xsl:template match="*" mode="subpipeline">
     <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
     <tr>
+      <xsl:if test="@p:is-step = 'true' and not(p:output)">
+        <xsl:attribute name="class" select="'local-end'"/>        
+      </xsl:if>
       <td colspan="{$depth}">
         <p class="names">
           <span class="type">
@@ -499,6 +539,31 @@
     </tr>
   </xsl:template>
   
+  <xsl:template match="p:variable" mode="subpipeline">
+    <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
+    <tr>
+      <td colspan="{$depth}">
+        <p class="names">
+          <span class="type">
+            <xsl:value-of select="name()"/>
+          </span>
+          <xsl:text xml:space="preserve"> </xsl:text>
+          <span class="name" id="var_{@name}">
+            <xsl:value-of select="@name"/>
+          </span>
+        </p>
+        <xsl:apply-templates select="p:documentation" mode="#current"/>
+      </td>
+      <td>
+        <xsl:apply-templates select="p:pipe" mode="#current"/>    
+      </td>
+      <td>        
+      </td>
+      <td>
+        <xsl:apply-templates select="@select" mode="#current"/>
+      </td>
+    </tr>
+  </xsl:template>
   <xsl:template match="p:documentation" mode="subpipeline" priority="2">
     <xsl:sequence select="node()"/>
   </xsl:template>
@@ -595,7 +660,7 @@
     <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
     <xsl:variable name="process-children" as="element(html:tr)*">
       <xsl:apply-templates select="self::p:choose/(p:when | p:otherwise)
-                                   | *[transpect:is-step(.)]" mode="#current">
+                                   | *[@p:is-step = 'true']" mode="#current">
         <xsl:with-param name="depth" select="$depth - 1" tunnel="yes"/>
       </xsl:apply-templates>
     </xsl:variable>
@@ -649,7 +714,7 @@
   <xsl:template match="p:for-each | p:group | p:viewport | p:try | p:catch" mode="subpipeline">
     <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
     <xsl:variable name="process-children" as="element(html:tr)*">
-      <xsl:apply-templates select="*[transpect:is-step(.)]" mode="#current">
+      <xsl:apply-templates select="*[@p:is-step = 'true'] | p:variable " mode="#current">
         <xsl:with-param name="depth" select="$depth - 1" tunnel="yes"/>
       </xsl:apply-templates>
     </xsl:variable>
