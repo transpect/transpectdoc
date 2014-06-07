@@ -16,37 +16,33 @@
 
   <xsl:key name="transpect:step" match="*[@p:is-step = 'true']" use="name()"/>
 
-  <xsl:variable name="title" select="if (not($project-name) or $project-name = '') 
-                                     then tokenize($output-base-uri, '/')[not(. = ('doc', 'trunk', 'repo'))][last()]
-                                     else $project-name" as="xs:string"/>
-
   <xsl:template match="* | @*" mode="#default main-html">
     <xsl:copy>
       <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="c:files | c:file[@source-type = library]">
+  <xsl:template match="c:files" mode="render-transpectdoc">
+    <xsl:call-template name="page"/>
+    <xsl:apply-templates select="c:file" mode="#current"/>
+  </xsl:template>
+
+  <xsl:template match="c:file[@source-type = library]" mode="render-transpectdoc">
     <!--<xsl:call-template name="page"/>-->
-    <xsl:apply-templates select="c:file | c:step-declarations"/>
+    <xsl:apply-templates select="c:step-declarations" mode="#current"/>
   </xsl:template>
 
   <xsl:template match="*[@source-type]" mode="main-html_">
     <p>
-      <a href="{$output-base-uri}/{transpect:normalize-for-filename(@display-name)}.html">
+      <a href="{$output-base-uri}/{@transpect:filename}.html">
         <xsl:value-of select="@display-name"/>
       </a>
     </p>
   </xsl:template>
 
-  <xsl:template match="c:step-declarations">
-    <xsl:apply-templates/>
+  <xsl:template match="c:step-declarations" mode="render-transpectdoc">
+    <xsl:apply-templates mode="#current"/>
   </xsl:template>
-
-  <xsl:function name="transpect:normalize-for-filename" as="xs:string">
-    <xsl:param name="name" as="xs:string"/>
-    <xsl:sequence select="replace(replace($name, ':', '_'), '(\s+\(.+\)|[^-0-9a-z_]+)', '', 'i')"/>
-  </xsl:function>
 
   <xsl:function name="transpect:page-name" as="xs:string">
     <xsl:param name="elt" as="element(*)"/>
@@ -58,15 +54,15 @@
     <xsl:sequence select="concat(if ($output-base-uri)
                                  then concat($output-base-uri, '/')
                                  else '', 
-                                 transpect:normalize-for-filename($elt/ancestor-or-self::*[@display-name][1]/@display-name), 
+                                 $elt/ancestor-or-self::*[@transpect:filename][1]/@transpect:filename, 
                                  '.html',
                                  $fragment
                                 )"/>
   </xsl:function>
   
-  <xsl:template match="c:file | c:step-declaration">
+  <xsl:template match="c:file | c:step-declaration" mode="render-transpectdoc">
     <xsl:call-template name="page"/>
-    <xsl:apply-templates select="c:step-declarations"/>
+    <xsl:apply-templates select="c:step-declarations" mode="#current"/>
   </xsl:template>
 
   <xsl:template name="page">
@@ -85,11 +81,16 @@
             <xsl:value-of select="string-join((@display-name, 'transpectdoc'), ' – ')"/>
           </title>
         </head>
-        <body id="{transpect:normalize-for-filename(@display-name)}" >
-          <xsl:call-template name="transpect:nav">
-            <xsl:with-param name="page-name" select="$page-name"/>
-          </xsl:call-template>
-          <xsl:call-template name="transpect:main"/>
+        <body>
+          <!-- we need this convoluted div structure to be compliant with the requirements of the interactive application -->
+          <div id="transpectdoc">
+            <div id="{@transpect:filename}" class="id-container">
+              <xsl:call-template name="transpect:nav">
+                <xsl:with-param name="page-name" select="$page-name"/>
+              </xsl:call-template>
+              <xsl:call-template name="transpect:main"/>
+            </div>
+          </div>
         </body>
       </html>
     </xsl:result-document>
@@ -99,9 +100,11 @@
     <xsl:param name="page-name" as="xs:string"/>
     <div id="nav" class="macroblock">
       <h1>
-        <xsl:value-of select="$title"/>
+        <xsl:sequence select="if (not($project-name) or $project-name = '') 
+                              then tokenize($output-base-uri, '/')[not(. = ('doc', 'trunk', 'repo'))][last()]
+                              else $project-name" />
       </h1>
-      <xsl:call-template name="nav">
+      <xsl:call-template name="transpect:nav-inner">
         <xsl:with-param name="page-name" tunnel="yes" select="$page-name"/>
       </xsl:call-template>
     </div>
@@ -113,13 +116,17 @@
     </div>
   </xsl:template>
   
+  <xsl:template match="c:files" mode="main-html">
+    <p>Please use the navigation pane to select a frontend pipeline or the step declarations used therein.</p>
+  </xsl:template>
+  
   <xsl:variable name="built-in-prefixes" select="('p', 'pxf', 'pos', 'ml', 'cxu', 'cxo', 'cx', 'cxf', 'c')" as="xs:string+"/>
 
   <xsl:key name="used-step" use="name()" 
     match="*"/><!-- filter it? [not(prefix-from-QName(node-name(.)) = $built-in-prefixes)] -->
   <xsl:key name="step-declaration-by-type" use="@p:type" match="*[@p:type]"/>
   
-  <xsl:template name="nav">
+  <xsl:template name="transpect:nav-inner">
     <xsl:param name="page-name" tunnel="yes" as="xs:string"/>
     <ul class="nav">
       <li>
@@ -317,7 +324,7 @@
   <xsl:template match="*" mode="links">
     <xsl:param name="style" as="xs:string?"/>
     <li>
-      <p class="nav" id="nav_{transpect:normalize-for-filename(@display-name)}">
+      <p class="nav" id="nav_{@transpect:filename}">
         <xsl:if test="not($style)">
           <xsl:value-of select="@source-type"/>
           <xsl:text> </xsl:text>
@@ -335,7 +342,7 @@
         <xsl:value-of select="(@project-relative-path, @href)[1]"/>
       </p>
       <xsl:if test="@canonical-href">
-        <p class="file-path"> Canonical URI: <xsl:value-of select="@canonical-href"/>
+        <p class="file-path"> Import URI: <xsl:value-of select="@canonical-href"/>
         </p>
       </xsl:if>
     </div>

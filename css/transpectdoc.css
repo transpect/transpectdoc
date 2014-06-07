@@ -6,7 +6,7 @@ body {
 .macroblock {
   display:inline-block;
   vertical-align:top;
-  border:0.5pt solid #e0d0a0;
+  border:1px solid #e0d0a0;
   background-color:#ffd;
   padding:0.5em;
 }
@@ -37,7 +37,7 @@ body {
 }
 
 .block table td {
-  border:0.5pt solid #dcb;
+  border:1px solid #dcb;
 }
 
 div.output {

@@ -171,4 +171,21 @@
     </xsl:choose>
   </xsl:function>
 
+  <!-- Collateral; convenience attribute: --> 
+
+  <xsl:function name="transpect:normalize-for-filename" as="xs:string">
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:sequence select="replace(replace($name, ':', '_'), '(\s+\(.+\)|[^0-9a-z_-]+)', '', 'i')"/>
+  </xsl:function>
+  
+  <!--<xsl:function name="transpect:normalize-for-filename" as="xs:string">
+    <xsl:param name="name" as="xs:string"/>
+    <xsl:sequence select="$name"/>
+  </xsl:function>-->
+  
+  <xsl:template match="@display-name" mode="connect">
+    <xsl:copy/>
+    <xsl:attribute name="transpect:filename" select="transpect:normalize-for-filename(.)"/>
+  </xsl:template>
+  
 </xsl:stylesheet>
