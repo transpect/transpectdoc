@@ -139,7 +139,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </letex:store-debug>
 
-  <p:xslt name="connections">
+  <p:xslt name="connections" initial-mode="connect">
     <p:documentation>Makes implicit primary port connections explicit. 
       As an unrelated side effect, will normalize plain text and DocBook markup within 
     p:documentation elements to HTML.</p:documentation>

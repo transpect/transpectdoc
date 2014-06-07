@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:c="http://www.w3.org/ns/xproc-step"
+  xmlns:cx="http://xmlcalabash.com/ns/extensions" 
   xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
   xmlns:letex="http://www.le-tex.de/namespace"
   xmlns:style="http://saxonica.com/ns/html-style-property"
@@ -13,6 +15,7 @@
 
   <xsl:import href="resolver/resolve-uri-by-catalog.xsl"/>
   <xsl:import href="../xsl/crawl.xsl"/>
+  <xsl:import href="../xsl/connections.xsl"/>
   
   <xsl:template match="/">
     <xsl:result-document href="#catalog" method="ixsl:replace-content">
@@ -90,7 +93,12 @@
   
   <xsl:template match="*[@id = ('process')]" mode="ixsl:onclick">
     <xsl:result-document href="#pipelines" method="ixsl:replace-content">
-      <xsl:call-template name="raw-list"/>
+      <xsl:variable name="crawl" as="document-node(element(c:files))">
+        <xsl:document>
+          <xsl:call-template name="crawl"/>  
+        </xsl:document>
+      </xsl:variable>
+      <xsl:apply-templates select="$crawl" mode="connect"/>
     </xsl:result-document>
   </xsl:template>
   
