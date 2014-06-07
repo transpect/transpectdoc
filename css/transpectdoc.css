@@ -101,6 +101,19 @@ col.connect {
   width:30%;
 }
 
+col.inputs {
+  width:40%;
+}
+
+col.outputs {
+  width:15%;
+}
+
+col.options {
+  width:20%;
+}
+
+
 .none {
   font-style:italic;
   padding:0.2em;
@@ -309,6 +322,22 @@ tr.local-end > td {
 }
 
 dd {
-  text-indent:-0.75em;
-  margin-left:1.5em;
+  margin-left:0.75em;
+}
+
+pre code {
+	padding: 5px;
+	word-wrap: normal;
+}
+pre{
+  width:60em;
+  max-width:100%;
+  overflow: auto;
+  margin-left:0; 
+	white-space:pre;
+	max-height: 16em;
+  }
+
+td pre {
+  width: 25em;
 }

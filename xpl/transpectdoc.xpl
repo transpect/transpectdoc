@@ -17,23 +17,22 @@
     <p>For each of the steps’ input and output ports, a linked list will be generated 
     that points to the ports in other pipelines that are connected to these ports.</p>
     <p>Sample invocation (from a Makefile):</p>
-    <pre>FRONTEND_PIPELINES = adaptions/common/xpl/idml2hobots.xpl adaptions/common/xpl/hobots2epub-frontend.xpl crossref/xpl/process-crossref-results.xpl crossref/xpl/jats-submit-crossref-query.xpl
+    <pre><code>FRONTEND_PIPELINES = adaptions/common/xpl/idml2hobots.xpl adaptions/common/xpl/hobots2epub-frontend.xpl crossref/xpl/process-crossref-results.xpl crossref/xpl/jats-submit-crossref-query.xpl
 transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
 	$(CALABASH) $(foreach pipe,$^,$(addprefix -i source=,$(call uri,$(pipe)))) \
 		$(call uri,transpectdoc/xpl/transpectdoc.xpl) \
-		debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)
-</pre>
+		debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)</code></pre>
     <p>Set the svn property <var>svn:mime-type</var> for the transpectdoc.css in your documentation 
     output directory to <kbd>text/css</kbd>, if you want to view the generated documentation online, not only locally.</p>
     <p>For customizing transpectdoc, there are three XSLT passes whose templates etc. may be overridden by specifying, e.g.:</p>
-    <pre>		-i crawling-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-crawl.xsl) \
+    <pre><code>		-i crawling-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-crawl.xsl) \
 		-i connections-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-connections.xsl) \
-		-i rendering-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-render-html-pages.xsl) \</pre>
+		-i rendering-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-render-html-pages.xsl) \</code></pre>
     <p>within the calabash.sh invocation (provided the files reside there, of course).</p>
     <h4>Adding Examples for Dynamically Evaluated Pipelines</h4>
     <p>If your pipeline loads and executes pipelines at runtime, i.e., pipelines that are not known statically in advance,
     you may provide examples for these pipelines. Example:</p>
-    <pre>&lt;bc:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
+    <pre><code>&lt;bc:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
   …
   &lt;p:pipeinfo>
     &lt;examples xmlns="http://www.le-tex.de/namespace/transpect"> 
@@ -41,7 +40,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
       &lt;generator-collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="hub2hobots/hub2hobots.xpl.xsl"/>
     &lt;/examples>
   &lt;/p:pipeinfo>
-&lt;/bc:dynamic-transformation-pipeline</pre>
+&lt;/bc:dynamic-transformation-pipeline</code></pre>
     <p>Please note that the <code>generator-collection</code> element is not implemted yet. It is meant for holding pointers to 
       XSLT stylesheets that generate the dynamically evaluated pipelines.</p>
     <p>There is an optional attribute <code>@for</code> on the <code>examples</code> element:</p>
@@ -75,7 +74,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
   </p:input>
   
   <p:input port="crawling-xslt">
-    <p:document href="../xsl/crawl.xsl"/>
+    <p:document href="../xsl/crawl-xpl.xsl"/>
   </p:input>
 
   <p:input port="connections-xslt">
@@ -121,7 +120,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     </p:documentation>
   </p:variable>
 
-  <p:xslt name="crawl" template-name="main">
+  <p:xslt name="crawl" template-name="crawl">
     <p:input port="source">
       <p:pipe port="source" step="transpectdoc"/>
       <p:document href="lib/xproc-1.0.xpl"/>
