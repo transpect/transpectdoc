@@ -154,7 +154,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </letex:store-debug>
   
-  <p:xslt name="render">
+  <p:xslt name="render" initial-mode="render-transpectdoc">
     <p:input port="parameters"><p:empty/></p:input>
     <p:input port="stylesheet">
       <p:pipe port="rendering-xslt" step="transpectdoc"/>
@@ -207,16 +207,6 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="dest-dir" select="concat($base-dir-system-path, '/highlight')"/>
   </letex:unzip>
 
-  <!--<cx:message>
-    <p:with-option name="message" select="'HL: ', resolve-uri('../lib/highlight.zip', static-base-uri())"></p:with-option>
-  </cx:message>-->
+  <p:sink/>
   
-  <p:sink/>
-  <!--
-  <pxf:info name="info">
-    <p:with-option name="href" select="resolve-uri('../lib/highlight.zip', static-base-uri())"></p:with-option>
-  </pxf:info>
-
-  <p:sink/>
-  -->
 </p:declare-step>

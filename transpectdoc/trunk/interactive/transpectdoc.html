@@ -24,16 +24,25 @@
                     stylesheet: "interactive.xsl"} );
       }
     </script>
+    <link rel="stylesheet" type="text/css" href="../css/transpectdoc.css"/>
+    <link rel="stylesheet" type="text/css" href="highlight/styles/default.css"/>
+    <script src="../lib/jquery-2.1.1.min.js"></script>
+    <script src="highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script type="text/javascript" src="../js/transpectdoc.js"></script>
+    
   </head>
   <body>
-    <h1 class="transitional">transpectdoc</h1>
-    <p class="loading">Loading the catalog file(s)…</p>
-    <p>Pipeline URL: <input type="text" size="100" id="xpl" value="file:/C:/cygwin/home/gerrit/Hogrefe/BookTagSet/repo/transpectdoc/xpl/transpectdoc.xpl"/>
-    <button id="add">add</button></p>
-    <!--<p>Pipeline URL: <input type="text" size="100" id="add" value="https://subversion.le-tex.de/common/transpectdoc/trunk/xpl/transpectdoc.xpl"/>
+    <div id="transpectdoc"><h1 class="transitional">transpectdoc</h1>
+      <p class="loading">Loading the catalog file(s)…</p>
+      <p>Pipeline URL: <input type="text" size="100" id="xpl"
+          value="file:/C:/cygwin/home/gerrit/Hogrefe/BookTagSet/repo/transpectdoc/xpl/transpectdoc.xpl" />
+        <button id="add">add</button></p>
+      <!--<p>Pipeline URL: <input type="text" size="100" id="add" value="https://subversion.le-tex.de/common/transpectdoc/trunk/xpl/transpectdoc.xpl"/>
       <button id="gothere">add</button></p>-->
-    <ul id="initial-base-uris"></ul>
-    <p><button id="process">Generate documentation</button></p>
+      <ul id="initial-base-uris"></ul>
+      <p><button id="process">Generate documentation</button></p>
+    </div>
     <div id="catalog"></div>
     <div id="pipelines"></div>
   </body>

@@ -16,6 +16,7 @@
   <xsl:import href="resolver/resolve-uri-by-catalog.xsl"/>
   <xsl:import href="../xsl/crawl.xsl"/>
   <xsl:import href="../xsl/connections.xsl"/>
+  <xsl:import href="../xsl/render-html-pages.xsl"/>
   
   <xsl:template match="/">
     <xsl:result-document href="#catalog" method="ixsl:replace-content">
@@ -100,6 +101,11 @@
       </xsl:variable>
       <xsl:apply-templates select="$crawl" mode="connect"/>
     </xsl:result-document>
+    <ixsl:schedule-action wait="1">
+      <xsl:call-template name="render-for-interactive">
+        <xsl:with-param name="page-name" select="'index'"/>
+      </xsl:call-template>
+    </ixsl:schedule-action>
   </xsl:template>
   
   <xsl:template match="/*" mode="add-base-uri">
@@ -126,4 +132,37 @@
     <xsl:sequence select="for $i in ixsl:page()//*:ul[@id = 'initial-base-uris']/*:li return string($i)"/>
   </xsl:function>
   
+  <!-- Render -->
+  
+  <xsl:template name="render-for-interactive">
+    <xsl:param name="page-name" as="xs:string"/>
+    <xsl:variable name="representation" as="document-node(element(c:files))">
+      <xsl:document>
+        <xsl:sequence select="ixsl:page()//*:div[@id = 'pipelines']/*"/>
+      </xsl:document>
+    </xsl:variable>
+    <xsl:result-document href="#transpectdoc" method="ixsl:replace-content">
+      <xsl:apply-templates select="$representation//*[@transpect:filename = $page-name]" mode="render-transpectdoc"/>  
+    </xsl:result-document>
+  </xsl:template>
+  
+  <xsl:template name="update-nav">
+    <xsl:sequence select="ixsl:call(ixsl:window(), 'update_nav')"/>
+  </xsl:template>
+  
+  <xsl:template name="page">
+    <div id="{@transpect:filename}" class="id-container">
+      <xsl:call-template name="transpect:nav">
+        <xsl:with-param name="page-name" select="'temp'"/>
+      </xsl:call-template>
+      <xsl:call-template name="transpect:main"/>
+    </div>
+    <ixsl:schedule-action wait="1">
+      <xsl:call-template name="update-nav"/>
+    </ixsl:schedule-action>
+  </xsl:template>
+  
+  <xsl:template match="c:files" mode="render-transpectdoc">
+    <xsl:call-template name="page"/>
+  </xsl:template>
 </xsl:stylesheet>
