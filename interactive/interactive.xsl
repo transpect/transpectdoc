@@ -79,7 +79,7 @@
       <xsl:apply-templates select="doc(cat:resolve(//*[@id = 'xpl']/@prop:value))" mode="add-base-uri"/>
       <!-- If there are no pipelines yet, add the standard library and Calabash’s extension step library -->
       <xsl:if test="not(ixsl:page()//*[@id = 'xpl']/*)">
-        <xsl:apply-templates select="for $l in ('library-1.0.xpl', 'xproc-1.0.xpl') return doc(concat('../xpl/lib/', $l))" mode="add-base-uri"/>
+        <xsl:apply-templates select="for $l in ('library-1.0.xpl', 'xproc-1.0.xpl', 'ltx-lib.xpl') return doc(concat('../xpl/lib/', $l))" mode="add-base-uri"/>
       </xsl:if>
     </xsl:result-document>
     <xsl:result-document href="#initial-base-uris" method="ixsl:append-content">
@@ -108,11 +108,20 @@
     </ixsl:schedule-action>
   </xsl:template>
   
-  <xsl:template match="/*" mode="add-base-uri">
+  <xsl:template match="/*" mode="add-base-uri" priority="2">
     <xsl:copy>
       <xsl:copy-of select="@*"/>
       <xsl:attribute name="xml:base" select="base-uri()"/>
-      <xsl:copy-of select="node()"/>
+      <xsl:attribute name="transpect:node-name" select="name()"/>
+      <xsl:apply-templates mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="*" mode="add-base-uri">
+    <xsl:copy>
+      <xsl:copy-of select="@*"/>
+      <xsl:attribute name="transpect:node-name" select="name()"/>
+      <xsl:apply-templates mode="#current"/>
     </xsl:copy>
   </xsl:template>
   
@@ -142,8 +151,18 @@
       </xsl:document>
     </xsl:variable>
     <xsl:result-document href="#transpectdoc" method="ixsl:replace-content">
-      <xsl:apply-templates select="$representation//*[@transpect:filename = $page-name]" mode="render-transpectdoc"/>  
+      <xsl:apply-templates select="$representation//*[@transpect:filename = $page-name]" mode="render-transpectdoc">
+        <xsl:with-param name="docroot" select="$representation" tunnel="yes"/>
+      </xsl:apply-templates>  
     </xsl:result-document>
+  </xsl:template>
+  
+  <xsl:template match="*:a[@href]" mode="ixsl:onclick" ixsl:prevent-default="yes">
+    <ixsl:schedule-action wait="1">
+      <xsl:call-template name="render-for-interactive">
+        <xsl:with-param name="page-name" select="replace(@href, '\.html', '')"/>
+      </xsl:call-template>
+    </ixsl:schedule-action>
   </xsl:template>
   
   <xsl:template name="update-nav">

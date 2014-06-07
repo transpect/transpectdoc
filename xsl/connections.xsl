@@ -56,7 +56,7 @@
   <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]" mode="connect">
     <xsl:copy>
       <xsl:attribute name="p:is-step" select="'true'"/>
-      <xsl:variable name="keep" select="@name, @generated-name, @cx:*" as="attribute(*)*"/>
+      <xsl:variable name="keep" select="@name, @generated-name, @transpect:node-name, @cx:*" as="attribute(*)*"/>
       <xsl:apply-templates select="$keep" mode="#current"/>
       <xsl:apply-templates select="@* except $keep" mode="make-with-option"/>
       <xsl:apply-templates select="." mode="make-primary-input-explicit"/>
