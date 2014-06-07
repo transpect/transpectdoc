@@ -11,15 +11,15 @@
   <xsl:import href="normalize-documentation.xsl"/>
   <xsl:include href="common.xsl"/>
   
-  <xsl:template match="* | @*">
+  <xsl:template match="* | @*" mode="connect">
     <xsl:copy>
 <!--      <xsl:attribute name="is-step" select="transpect:is-step(self::*)"/>-->
-      <xsl:apply-templates select="@*, node()"/>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
 
   <!-- side effect: convert plain text p:documentation to HTML --> 
-  <xsl:template match="p:documentation">
+  <xsl:template match="p:documentation" mode="connect">
     <xsl:apply-templates select="." mode="normalize-documentation"/>
   </xsl:template>
 
@@ -53,15 +53,15 @@
   <xsl:key name="primary-output-decl" match="p:output[(@primary = 'true') or (count(../p:output) = 1)][../@p:type]" use="../@p:type"/>
 
   <!-- For steps in subpipelines, Make primary inputs and outputs explicit: --> 
-  <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]">
+  <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]" mode="connect">
     <xsl:copy>
       <xsl:attribute name="p:is-step" select="'true'"/>
       <xsl:variable name="keep" select="@name, @generated-name, @cx:*" as="attribute(*)*"/>
-      <xsl:apply-templates select="$keep"/>
+      <xsl:apply-templates select="$keep" mode="#current"/>
       <xsl:apply-templates select="@* except $keep" mode="make-with-option"/>
       <xsl:apply-templates select="." mode="make-primary-input-explicit"/>
       <xsl:apply-templates select="." mode="make-primary-output-explicit"/>
-      <xsl:apply-templates/>
+      <xsl:apply-templates mode="#current"/>
     </xsl:copy>
   </xsl:template>
   
@@ -100,7 +100,7 @@
   </xsl:template>
   
   <!-- the only output port declaration is primary by definition -->
-  <xsl:template match="p:output[../@source-type = ('declare-step', 'pipeline')][count(../p:output) = 1]">
+  <xsl:template match="p:output[../@source-type = ('declare-step', 'pipeline')][count(../p:output) = 1]" mode="connect" priority="2">
     <xsl:copy>
       <xsl:copy-of select="@*"/>
       <xsl:attribute name="primary" select="'true'"/>
@@ -170,6 +170,5 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:function>
-
 
 </xsl:stylesheet>

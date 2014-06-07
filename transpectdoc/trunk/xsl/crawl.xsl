@@ -21,7 +21,7 @@
 
   <xsl:key name="by-href" match="*[@xml:id]" use="string-join((ancestor::*[transpect:is-step(.)][@href][1]/@href, @xml:id), '#')"/>
 
-  <xsl:template name="crawl">
+  <xsl:template name="crawl" as="element(c:files)">
     <xsl:variable name="raw-list" as="element(c:file)*">
       <xsl:call-template name="raw-list"/>    
     </xsl:variable>
@@ -46,7 +46,6 @@
   <xsl:template match="p:library | p:declare-step[not(parent::p:library)] | p:pipeline[not(parent::p:library)]" 
     priority="4" mode="raw-list">
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
-    <xsl:message select="'ggggggggggggggggggggg'"/>
     <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri())}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="if ($base-dir-uri-regex) 

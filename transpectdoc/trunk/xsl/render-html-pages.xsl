@@ -86,22 +86,33 @@
           </title>
         </head>
         <body id="{transpect:normalize-for-filename(@display-name)}" >
-          <div id="nav" class="macroblock">
-            <h1>
-              <xsl:value-of select="$title"/>
-            </h1>
-            <xsl:call-template name="nav">
-              <xsl:with-param name="page-name" tunnel="yes" select="$page-name"/>
-            </xsl:call-template>
-          </div>
-          <div id="main" class="macroblock">
-            <xsl:apply-templates select="." mode="main-html"/>  
-          </div>
+          <xsl:call-template name="transpect:nav">
+            <xsl:with-param name="page-name" select="$page-name"/>
+          </xsl:call-template>
+          <xsl:call-template name="transpect:main"/>
         </body>
       </html>
     </xsl:result-document>
   </xsl:template>
 
+  <xsl:template name="transpect:nav">
+    <xsl:param name="page-name" as="xs:string"/>
+    <div id="nav" class="macroblock">
+      <h1>
+        <xsl:value-of select="$title"/>
+      </h1>
+      <xsl:call-template name="nav">
+        <xsl:with-param name="page-name" tunnel="yes" select="$page-name"/>
+      </xsl:call-template>
+    </div>
+  </xsl:template>
+
+  <xsl:template name="transpect:main">
+    <div id="main" class="macroblock">
+      <xsl:apply-templates select="." mode="main-html"/>  
+    </div>
+  </xsl:template>
+  
   <xsl:variable name="built-in-prefixes" select="('p', 'pxf', 'pos', 'ml', 'cxu', 'cxo', 'cx', 'cxf', 'c')" as="xs:string+"/>
 
   <xsl:key name="used-step" use="name()" 
