@@ -76,6 +76,7 @@
         <head>
           <meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
           <link rel="stylesheet" type="text/css" href="transpectdoc.css"/>
+          <link rel="stylesheet" type="text/css" href="highlight/styles/default.css"/>
           <script src="jquery.js"></script>
           <script src="highlight/highlight.pack.js"></script>
           <script>hljs.initHighlightingOnLoad();</script>
@@ -436,6 +437,8 @@
         <span class="name">
           <xsl:value-of select="$connected-to/@name"/>
         </span>
+        <xsl:text> </xsl:text>
+        <xsl:value-of select="@port"/>
       </a>
     </li>
   </xsl:template>
@@ -587,14 +590,7 @@
   </xsl:template>
   
   <xsl:template match="p:inline" mode="subpipeline">
-    <dl>
-      <dt>inline</dt>
-      <dd>
-        <pre>
-          <xsl:apply-templates mode="verbose"/>
-        </pre>
-      </dd>
-    </dl>
+    <pre><code><xsl:sequence select="transpect:code(node(), true())"/></code></pre>
   </xsl:template>
 
   <xsl:template match="p:viewport-source | p:iteration-source" mode="subpipeline">
@@ -756,17 +752,66 @@
     <xsl:sequence select="$process-children"/>
   </xsl:template>
   
-  <xsl:template match="*" mode="verbose">
+  <xsl:function name="transpect:code" as="text()*">
+    <xsl:param name="input" as="node()*"/>
+    <xsl:param name="clip-leading-spaces" as="xs:boolean"/>
+    <xsl:variable name="prelim" as="text()*">
+      <xsl:apply-templates select="$input" mode="verbose"/>
+    </xsl:variable>
+    <xsl:variable name="prelim-string" as="xs:string" select="string-join($prelim, '')"/>
+    <xsl:variable name="lines" as="element(html:line)*">
+      <xsl:for-each select="tokenize($prelim-string, '\n')">
+        <line>
+          <xsl:analyze-string select="." regex="^\s+">
+            <xsl:matching-substring>
+              <space length="{string-length(.)}">
+                <xsl:sequence select="."/>
+              </space>
+            </xsl:matching-substring>
+            <xsl:non-matching-substring>
+              <xsl:sequence select="."/>
+            </xsl:non-matching-substring>
+          </xsl:analyze-string>
+        </line>
+      </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="min-leading-spaces" as="xs:double">
+      <xsl:choose>
+        <xsl:when test="not(every $line in $lines[normalize-space()] satisfies ($line/html:space))">
+          <xsl:sequence select="0"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:sequence select="min($lines/html:space/@length)"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:apply-templates select="$lines" mode="render-verbose">
+      <xsl:with-param name="min" select="xs:integer($min-leading-spaces)" as="xs:integer" tunnel="yes"/>
+    </xsl:apply-templates>
+  </xsl:function>
+
+  <xsl:template match="html:line" mode="render-verbose" priority="2">
+    <xsl:next-match/>
+    <xsl:text>&#xa;</xsl:text>
+  </xsl:template>
+  
+  <xsl:template match="html:line[html:space]" mode="render-verbose">
+    <xsl:param name="min" as="xs:integer?" tunnel="yes"/>
+<!--    <xsl:message select="'length ', html:space/@length, ' min ', $min"></xsl:message>-->
+    <xsl:value-of select="substring(html:space, 1, xs:integer(html:space/@length) - $min - 1)"/>
+    <xsl:value-of select="text()"/>
+  </xsl:template>
+  
+  <xsl:template match="*" mode="verbose" as="text()+">
     <xsl:text>&lt;</xsl:text>
     <xsl:value-of select="name()"/>
     <xsl:apply-templates select="@*" mode="#current"/>
     <xsl:choose>
-      <xsl:when test="node()[normalize-space()]">
+      <xsl:when test="node()">
         <xsl:text>&gt;</xsl:text>
         <xsl:apply-templates mode="#current"/>
         <xsl:text>&lt;/</xsl:text>
         <xsl:value-of select="name()"/>
-        <xsl:apply-templates select="@*" mode="#current"/>
         <xsl:text>&gt;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
@@ -775,7 +820,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="@*" mode="verbose">
+  <xsl:template match="@*" mode="verbose" as="text()+">
     <xsl:text> </xsl:text>
     <xsl:value-of select="name()"/>
     <xsl:text>="</xsl:text>
