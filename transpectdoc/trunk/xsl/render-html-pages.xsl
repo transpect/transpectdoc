@@ -122,11 +122,12 @@
   
   <xsl:variable name="built-in-prefixes" select="('p', 'pxf', 'pos', 'ml', 'cxu', 'cxo', 'cx', 'cxf', 'c')" as="xs:string+"/>
 
-  <xsl:key name="used-step" use="name()" 
-    match="*"/><!-- filter it? [not(prefix-from-QName(node-name(.)) = $built-in-prefixes)] -->
+  <xsl:key name="used-step" use="(@transpect:node-name, name())[1]" match="*"/>
   <xsl:key name="step-declaration-by-type" use="@p:type" match="*[@p:type]"/>
   
   <xsl:template name="transpect:nav-inner">
+    <!-- necessary for interactive mode: -->
+    <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
     <xsl:param name="page-name" tunnel="yes" as="xs:string"/>
     <ul class="nav">
       <li>
@@ -141,7 +142,7 @@
         </ul>
       </li>
       <xsl:variable name="typed-steps" select="//*[@p:type]" as="element(*)*"/>
-      <xsl:variable name="used-steps" select="$typed-steps[key('used-step', @p:type)]"/>
+      <xsl:variable name="used-steps" select="$typed-steps[key('used-step', @p:type, $docroot)]"/>
       <xsl:if test="exists($typed-steps)">
         <li>
           <p class="toggle level1" id="nav_typedSteps">
@@ -427,9 +428,10 @@
   </xsl:template>
   
   <xsl:template match="p:input" mode="connections">
+    <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
     <!-- context: p:input in a step declaration -->
     <xsl:variable name="pipes" as="element(p:pipe)*"
-      select="key('transpect:step', current()/../@p:type)/p:input[@port = current()/@port]/p:pipe"/>
+      select="key('transpect:step', current()/../@p:type, $docroot)/p:input[@port = current()/@port]/p:pipe"/>
     <xsl:variable name="connection-list-items" as="element(html:li)*">
       <xsl:apply-templates mode="#current" select="$pipes"/>
     </xsl:variable>
@@ -644,7 +646,8 @@
   </xsl:template>
 
   <xsl:template match="p:with-option" mode="subpipeline">
-    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../name())/p:option[@name = current()/@name]" as="element(*)?"/>
+    <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
+    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../name(), $docroot)/p:option[@name = current()/@name]" as="element(*)?"/>
     <p>
       <xsl:choose>
         <xsl:when test="exists($declaration)">
