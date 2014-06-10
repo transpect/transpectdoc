@@ -13,7 +13,6 @@
   extension-element-prefixes="ixsl"
   version="2.0">
 
-  <xsl:import href="resolver/resolve-uri-by-catalog.xsl"/>
   <xsl:import href="../xsl/crawl.xsl"/>
   <xsl:import href="../xsl/connections.xsl"/>
   <xsl:import href="../xsl/render-html-pages.xsl"/>
@@ -76,10 +75,11 @@
 
   <xsl:template match="*[@id = ('add')]" mode="ixsl:onclick">
     <xsl:result-document href="#pipelines" method="ixsl:append-content">
-      <xsl:apply-templates select="doc(cat:resolve(//*[@id = 'xpl']/@prop:value))" mode="add-base-uri"/>
+      <xsl:variable name="href" select="//*[@id = 'xpl']/@prop:value" as="xs:string"/>
+      <xsl:apply-templates select="doc(cat:resolve($href))" mode="transpect:read-doc"/>
       <!-- If there are no pipelines yet, add the standard library and Calabash’s extension step library -->
-      <xsl:if test="not(ixsl:page()//*[@id = 'xpl']/*)">
-        <xsl:apply-templates select="for $l in ('library-1.0.xpl', 'xproc-1.0.xpl', 'ltx-lib.xpl') return doc(concat('../xpl/lib/', $l))" mode="add-base-uri"/>
+      <xsl:if test="not(ixsl:page()//*[@id = 'pipelines']/*)">
+        <xsl:apply-templates select="for $l in ('library-1.0.xpl', 'xproc-1.0.xpl', 'ltx-lib.xpl') return doc(concat('../xpl/lib/', $l))" mode="transpect:read-doc"/>
       </xsl:if>
     </xsl:result-document>
     <xsl:result-document href="#initial-base-uris" method="ixsl:append-content">
@@ -108,25 +108,25 @@
     </ixsl:schedule-action>
   </xsl:template>
   
-  <xsl:template match="/*" mode="add-base-uri" priority="2">
+  <xsl:template match="/*" mode="transpect:read-doc" priority="2">
     <xsl:copy>
-      <xsl:copy-of select="@*"/>
       <xsl:attribute name="xml:base" select="base-uri()"/>
-      <xsl:attribute name="transpect:node-name" select="name()"/>
-      <xsl:apply-templates mode="#current"/>
-    </xsl:copy>
-  </xsl:template>
-  
-  <xsl:template match="*" mode="add-base-uri">
-    <xsl:copy>
-      <xsl:copy-of select="@*"/>
-      <xsl:attribute name="transpect:node-name" select="name()"/>
-      <xsl:apply-templates mode="#current"/>
+      <xsl:attribute name="transpect:name" select="name()"/>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
   
   <!-- Crawl -->
-  
+
+  <xsl:template match="*" mode="transpect:read-doc">
+    <xsl:copy>
+      <xsl:if test=" prefix-from-QName(node-name(.))">
+        <xsl:attribute name="transpect:name" select="name()"/>  
+      </xsl:if>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+    
   <xsl:template name="raw-list">
     <xsl:apply-templates select="ixsl:page()//*:div[@id = 'pipelines']/*" mode="raw-list">
       <xsl:with-param name="catalog" tunnel="yes">
@@ -145,6 +145,12 @@
   
   <xsl:template name="render-for-interactive">
     <xsl:param name="page-name" as="xs:string"/>
+    <xsl:for-each select="ixsl:page()//*:button[@id = 'process']">
+      <ixsl:set-attribute name="style:display" select="'none'"/>
+    </xsl:for-each>
+    <xsl:for-each select="ixsl:page()//*[@id = 'wait']">
+      <ixsl:set-attribute name="style:visibility" select="'visible'"/>
+    </xsl:for-each>
     <xsl:variable name="representation" as="document-node(element(c:files))">
       <xsl:document>
         <xsl:sequence select="ixsl:page()//*:div[@id = 'pipelines']/*"/>

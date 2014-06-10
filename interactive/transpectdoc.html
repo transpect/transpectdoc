@@ -6,7 +6,7 @@
     <style type="text/css">
         body { max-width: 60em; 
                font-family: Calibri, Lucida, sans-serif }
-        #catalog, #pipelines {display:none}
+        #catalog, #pipelines, #wait {display:none}
         button { visibility: hidden }
     </style>
     <!--<script type="text/javascript" src="https://subversion.le-tex.de/common/saxon-ce/SaxonceDebug/Saxonce.nocache.js"></script>-->
@@ -41,7 +41,7 @@
       <!--<p>Pipeline URL: <input type="text" size="100" id="add" value="https://subversion.le-tex.de/common/transpectdoc/trunk/xpl/transpectdoc.xpl"/>
       <button id="gothere">add</button></p>-->
       <ul id="initial-base-uris"></ul>
-      <p><button id="process">Generate documentation</button></p>
+      <p><span id="wait">Processing – please wait…</span><button id="process">Generate documentation</button></p>
     </div>
     <div id="catalog"></div>
     <div id="pipelines"></div>

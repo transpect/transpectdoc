@@ -56,7 +56,7 @@
   <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]" mode="connect">
     <xsl:copy>
       <xsl:attribute name="p:is-step" select="'true'"/>
-      <xsl:variable name="keep" select="@name, @generated-name, @transpect:node-name, @cx:*" as="attribute(*)*"/>
+      <xsl:variable name="keep" select="@name, @generated-name, @transpect:name, @cx:*" as="attribute(*)*"/>
       <xsl:apply-templates select="$keep" mode="#current"/>
       <xsl:apply-templates select="@* except $keep" mode="make-with-option"/>
       <xsl:apply-templates select="." mode="make-primary-input-explicit"/>
@@ -66,7 +66,7 @@
   </xsl:template>
   
   <xsl:template match="@*" mode="make-with-option">
-    <p:with-option name="{name()}" select="'{.}'"/>
+    <p:with-option name="{name()}" select="'{.}'" transpect:name="p:with-option"/>
   </xsl:template>
 
   <xsl:template match="text()[not(normalize-space())]" mode="make-primary-input-explicit make-primary-output-explicit"/>
@@ -80,7 +80,7 @@
                 mode="make-primary-input-explicit">
     <p:input generated="true">
       <xsl:copy-of select="key('primary-input-decl', name())/@port"/>
-      <xsl:sequence select="transpect:default-readable-port(.)"/>
+      <xsl:comment>a</xsl:comment><xsl:sequence select="transpect:default-readable-port(.)"/><xsl:comment>b</xsl:comment>
     </p:input>
   </xsl:template>
 
@@ -119,7 +119,7 @@
   <!-- For a given step in a subsequence, gives the p:pipe connection to
     the default readable port that is present here. It can be used in
     generated p:input elements. -->
-  <xsl:function name="transpect:default-readable-port" as="element(p:pipe)?">
+  <xsl:function name="transpect:default-readable-port" as="item()*">
     <xsl:param name="context" as="element(*)"/>
     <xsl:variable name="context-or-wrapper" as="element(*)">
       <xsl:choose>
@@ -143,7 +143,6 @@
     </xsl:variable>
     <!-- p:for-each, p:choose, p:group or atomic step in a subpipeline -->
     <xsl:variable name="preceding-step" as="element()?" select="$context-or-wrapper/preceding-sibling::*[transpect:is-step(.)][1]"/>
-    <!-- §§§ does is-step() also return true() for p:group, p:for-each, p:choose? -->
     <xsl:variable name="preceding-steps-output-decl" as="element(p:output)*"
       select="key('primary-output-decl', $preceding-step/name(), root($context))"/>
     <xsl:if test="count($preceding-steps-output-decl) gt 1">
