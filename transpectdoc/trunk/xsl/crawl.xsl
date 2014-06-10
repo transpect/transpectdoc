@@ -10,6 +10,8 @@
   exclude-result-prefixes="c cx xs letex transpect"
   version="2.0">
   
+  <xsl:import href="../interactive/resolver/resolve-uri-by-catalog.xsl"/>
+
   <xsl:include href="common.xsl"/>
 
   <xsl:param name="project-root-uri" as="xs:string?"/>
@@ -23,7 +25,7 @@
 
   <xsl:template name="crawl" as="element(c:files)">
     <xsl:variable name="raw-list" as="element(c:file)*">
-      <xsl:call-template name="raw-list"/>    
+      <xsl:call-template name="raw-list"/>
     </xsl:variable>
     <xsl:variable name="consolidate-by-href" as="element(c:file)*">
       <xsl:for-each-group select="$raw-list" group-by="@href">
@@ -31,46 +33,91 @@
       </xsl:for-each-group>
     </xsl:variable>
     <c:files display-name="index">
+      <xsl:message select="'CBH: ', ' # ', $consolidate-by-href/@href"></xsl:message>
       <xsl:copy-of select="$consolidate-by-href" copy-namespaces="no"/>
     </c:files>
   </xsl:template>
   
-  <xsl:template name="raw-list">
-    <xsl:apply-templates select="collection()" mode="raw-list"/>
-  </xsl:template>
-  
-  <xsl:template match="text()" mode="raw-list"/>
+  <!--<xsl:template match="text()" mode="raw-list"/>-->
   
   <!-- The top-level file contents. We don’t use /* for the matching pattern
     because in interactive mode, they aren’t top-level elements -->
   <xsl:template match="p:library | p:declare-step[not(parent::p:library)] | p:pipeline[not(parent::p:library)]" 
     priority="4" mode="raw-list">
+    <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
-    <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri())}">
+    <xsl:message select="'tnu: ', base-uri(.)"></xsl:message>
+    <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri(.))}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="if ($base-dir-uri-regex) 
-                then replace(base-uri(), $base-dir-uri-regex, '')
-                else base-uri()"/>
-      <xsl:if test="$project-relative-path ne base-uri()">
+                then replace(base-uri(/*), $base-dir-uri-regex, '')
+                else base-uri(/*)"/>
+      <xsl:if test="$project-relative-path ne base-uri(/*)">
         <xsl:attribute name="project-relative-path" select="$project-relative-path"/>
       </xsl:if>
       <xsl:if test="$pre-catalog-resolution-href">
         <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>  
       </xsl:if>
       <xsl:call-template name="process-inner"/>
+<xsl:comment select="'inner: ', */name()"/>
     </c:file>
     <xsl:apply-templates select="p:import" mode="raw-list">
       <xsl:with-param name="example-for" select="()" tunnel="yes"/>
     </xsl:apply-templates>
-    <xsl:for-each select="descendant::*:examples/*:collection">
-      <xsl:apply-templates select="transpect:find-in-dir(
-                                     @dir-uri, 
-                                     @file, 
-                                     document('http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml')
-                                   )" mode="raw-list">
-        <xsl:with-param name="example-for" select="@file" tunnel="yes"/>
-      </xsl:apply-templates>  
-    </xsl:for-each>
+    <xsl:apply-templates select="(self::p:declare-step | self::p:pipeline)//transpect:examples" mode="#current"/>
+  </xsl:template>
+
+  <xsl:template match="transpect:examples" mode="raw-list">
+    <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
+    <xsl:variable name="context" select="." as="element(transpect:examples)"/>
+    <xsl:variable name="files" as="document-node(element(*))*">
+      <xsl:sequence select="for $f in transpect:file 
+                            return transpect:doc($f/@href, $catalog)"/>
+      <xsl:sequence select="for $c in transpect:collection 
+                            return transpect:find-in-dir(
+                              $c/@dir-uri, 
+                              $c/@file, 
+                              $catalog
+                            )" use-when="not(contains(system-property('xsl:product-name'), 'Saxon CE'))"/>
+    </xsl:variable>
+    <!-- there may be duplicates -->
+    <xsl:message select="'FILES ', count($files), ' ', count(descendant::transpect:collection), ' ', count(descendant::transpect:file)"></xsl:message>
+    <xsl:for-each-group select="$files" group-by="base-uri(/*)">
+      <xsl:apply-templates select="." mode="#current">
+        <xsl:with-param name="example-for" select="$context/@option-value" tunnel="yes"/>
+      </xsl:apply-templates>
+    </xsl:for-each-group>
+  </xsl:template>
+
+  <!-- Resolves the URI against a supplied catalog and process the document in a mode that will 
+    add a transpect:name attribute to prefixed names (if there is a tempplate for that – it should be
+    in the interactive implementation).
+    The latter is because browsers might mangle the prefix. 
+    Please note that you might need to resolve-uri() relative hrefs prior to
+    passing them to transpect:doc() -->
+  <xsl:function name="transpect:doc" as="document-node(element(*))?">
+    <xsl:param name="href" as="xs:string"/>
+    <xsl:param name="catalog" as="document-node(element(cat:catalog))?"/>
+    <xsl:apply-templates select="if ($catalog) 
+                           then doc(letex:resolve-uri-by-catalog($href, $catalog))
+                           else doc($href)" mode="transpect:read-doc"/>
+  </xsl:function>
+  
+  <xsl:template match="/" mode="transpect:read-doc">
+    <xsl:document>
+      <xsl:apply-templates mode="#current"/>
+    </xsl:document>
+  </xsl:template>
+
+  <xsl:template match="/*" mode="transpect:read-doc">
+    <xsl:copy>
+      <xsl:attribute name="xml:base" select="base-uri()"/>
+      <xsl:apply-templates select="@*, *" mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="* | @*" mode="transpect:read-doc">
+    <xsl:copy-of select="."/>
   </xsl:template>
 
   <xsl:function name="transpect:find-in-dir" as="document-node(element(*))*">
@@ -84,7 +131,7 @@
                                                   else $dir-uri,
                                                   '/?select=', $file-name, 
                                                   ';recurse=yes'
-                                                )"/>
+                                                )" as="xs:string"/>
     <xsl:sequence select="collection($collection-uri)[contains(base-uri(), $file-name-with-local-dir)]"/>
   </xsl:function>
 
@@ -143,7 +190,7 @@
       </c:step-declarations>
     </xsl:if>
     <xsl:apply-templates select="* except (p:input | p:output | p:import | p:serialization
-                                 | p:declare-step | p:pipeline )" mode="raw-list"/>
+                                           | p:declare-step | p:pipeline )" mode="raw-list"/>
   </xsl:template>
 
   <xsl:template match="@*" mode="raw-list">
@@ -151,7 +198,9 @@
   </xsl:template>
 
   <xsl:template match="*" mode="raw-list">
-    <xsl:copy-of select="."/>
+    <xsl:copy>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
+    </xsl:copy>
   </xsl:template>
   
   <xsl:template match="p:when | p:otherwise" mode="raw-list">
@@ -199,11 +248,7 @@
   
   <xsl:template match="p:import" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
-    <xsl:apply-templates select="doc(
-                                   if ($catalog)
-                                   then letex:resolve-uri-by-catalog(@href, $catalog) 
-                                   else resolve-uri(@href, base-uri())
-                                 )" mode="#current">
+    <xsl:apply-templates select="transpect:doc(resolve-uri(@href, base-uri(/*)), $catalog)" mode="#current">
       <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>

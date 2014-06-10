@@ -14,7 +14,15 @@
   <xsl:param name="output-base-uri" select="'doc'"/>
   <xsl:param name="project-name" as="xs:string?" />
 
-  <xsl:key name="transpect:step" match="*[@p:is-step = 'true']" use="name()"/>
+  <!-- In interactive mode, the pipeline collection representation is stored in the DOM and read from
+    there for rendering. The namespace prefixes of stored elements might get altered. Therefore we store
+    an attribute transpect:name on these elements that gives the correct prefixed name (e.g., p:store). -->
+  <xsl:function name="transpect:name" as="xs:string">
+    <xsl:param name="elt" as="element(*)"/>
+    <xsl:sequence select="($elt/@transpect:name, name($elt))[1]"/>
+  </xsl:function>
+
+  <xsl:key name="transpect:step" match="*[@p:is-step = 'true']" use="transpect:name(.)"/>
 
   <xsl:template match="* | @*" mode="#default main-html">
     <xsl:copy>
@@ -122,7 +130,7 @@
   
   <xsl:variable name="built-in-prefixes" select="('p', 'pxf', 'pos', 'ml', 'cxu', 'cxo', 'cx', 'cxf', 'c')" as="xs:string+"/>
 
-  <xsl:key name="used-step" use="(@transpect:node-name, name())[1]" match="*"/>
+  <xsl:key name="used-step" use="transpect:name(.)" match="*"/>
   <xsl:key name="step-declaration-by-type" use="@p:type" match="*[@p:type]"/>
   
   <xsl:template name="transpect:nav-inner">
@@ -296,11 +304,11 @@
             </xsl:otherwise>
           </xsl:choose>
         </div>
-        <xsl:if test="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]">
+        <xsl:if test="//*[@source-type = ('declare-step', 'pipeline')][.//*[transpect:name(.) = current()/@p:type]]">
           <div class="interface block use">
             <h3 class="toggle"><a class="pointer">Used by</a></h3>
             <xsl:variable name="using-steps" as="element(*)*">
-              <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[name() = current()/@p:type]]"
+              <xsl:for-each-group select="//*[@source-type = ('declare-step', 'pipeline')][.//*[transpect:name(.) = current()/@p:type]]"
                 group-by="@display-name">
                 <xsl:sort select="current-grouping-key()"/>
                 <xsl:apply-templates select="." mode="links"/>  
@@ -446,13 +454,13 @@
     <!-- p:input in a connection --> 
     <xsl:variable name="connected-to" as="element(*)" 
       select="ancestor::*[@source-type = 'declare-step']
-                /descendant-or-self::*[not(name() = ('p:option', 'p:param', 'p:with-option', 'p:with-param'))]
+                /descendant-or-self::*[not(transpect:name(.) = ('p:option', 'p:param', 'p:with-option', 'p:with-param'))]
                                       [@name = current()/@step]"/>
     <li>
       <a href="{transpect:page-name($connected-to, $output-base-uri)}">
         <xsl:value-of select="transpect:render-display-name(ancestor::*[@source-type = 'declare-step']/@display-name)"/>
         <xsl:text>/</xsl:text>
-        <xsl:value-of select="$connected-to/name()"/>
+        <xsl:value-of select="transpect:name($connected-to)"/>
         <xsl:text> </xsl:text>
         <span class="name">
           <xsl:value-of select="$connected-to/@name"/>
@@ -532,7 +540,7 @@
       <td colspan="{$depth}">
         <p class="names">
           <span class="type">
-            <xsl:value-of select="name()"/>
+            <xsl:value-of select="transpect:name(.)"/>
           </span>
           <xsl:if test="@name">
             <xsl:text xml:space="preserve"> </xsl:text>
@@ -568,7 +576,7 @@
       <td colspan="{$depth}">
         <p class="names">
           <span class="type">
-            <xsl:value-of select="name()"/>
+            <xsl:value-of select="transpect:name(.)"/>
           </span>
           <xsl:text xml:space="preserve"> </xsl:text>
           <span class="name" id="var_{@name}">
@@ -632,13 +640,13 @@
 
   <xsl:template match="p:empty" mode="subpipeline">
     <p>
-      <xsl:value-of select="name()"/>
+      <xsl:value-of select="transpect:name(.)"/>
     </p>
   </xsl:template>
   
   <xsl:template match="p:input/p:document" mode="subpipeline">
     <p>
-      <xsl:value-of select="name()"/>
+      <xsl:value-of select="transpect:name(.)"/>
       <a href="{@href}">
         <xsl:value-of select="@href"/>
       </a>
@@ -647,7 +655,7 @@
 
   <xsl:template match="p:with-option" mode="subpipeline">
     <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
-    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../name(), $docroot)/p:option[@name = current()/@name]" as="element(*)?"/>
+    <xsl:variable name="declaration" select="key('step-declaration-by-type', ../transpect:name(.), $docroot)/p:option[@name = current()/@name]" as="element(*)?"/>
     <p>
       <xsl:choose>
         <xsl:when test="exists($declaration)">
@@ -665,7 +673,7 @@
   </xsl:template>
   
   <xsl:template match="p:choose | p:otherwise | p:for-each | p:try | p:catch | p:group | p:viewport" mode="subpipeline-environment">
-    <xsl:value-of select="name()"/>
+    <xsl:value-of select="transpect:name(.)"/>
   </xsl:template>
 
   <xsl:template match="p:when" mode="subpipeline-environment">
@@ -825,14 +833,14 @@
   
   <xsl:template match="*" mode="verbose" as="text()+">
     <xsl:text>&lt;</xsl:text>
-    <xsl:value-of select="name()"/>
+    <xsl:value-of select="transpect:name(.)"/>
     <xsl:apply-templates select="@*" mode="#current"/>
     <xsl:choose>
       <xsl:when test="node()">
         <xsl:text>&gt;</xsl:text>
         <xsl:apply-templates mode="#current"/>
         <xsl:text>&lt;/</xsl:text>
-        <xsl:value-of select="name()"/>
+        <xsl:value-of select="transpect:name(.)"/>
         <xsl:text>&gt;</xsl:text>
       </xsl:when>
       <xsl:otherwise>
