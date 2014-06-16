@@ -14,14 +14,6 @@
   <xsl:param name="output-base-uri" select="'doc'"/>
   <xsl:param name="project-name" as="xs:string?" />
 
-  <!-- In interactive mode, the pipeline collection representation is stored in the DOM and read from
-    there for rendering. The namespace prefixes of stored elements might get altered. Therefore we store
-    an attribute transpect:name on these elements that gives the correct prefixed name (e.g., p:store). -->
-  <xsl:function name="transpect:name" as="xs:string">
-    <xsl:param name="elt" as="element(*)"/>
-    <xsl:sequence select="($elt/@transpect:name, name($elt))[1]"/>
-  </xsl:function>
-
   <xsl:key name="transpect:step" match="*[@p:is-step = 'true']" use="transpect:name(.)"/>
 
   <xsl:template match="* | @*" mode="#default main-html">
@@ -655,6 +647,7 @@
 
   <xsl:template match="p:with-option" mode="subpipeline">
     <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
+<!--<xsl:message select="'PWO: ', key('step-declaration-by-type', ../transpect:name(.), $docroot)"></xsl:message>-->
     <xsl:variable name="declaration" select="key('step-declaration-by-type', ../transpect:name(.), $docroot)/p:option[@name = current()/@name]" as="element(*)?"/>
     <p>
       <xsl:choose>
