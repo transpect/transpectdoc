@@ -29,11 +29,12 @@
     </xsl:variable>
     <xsl:variable name="consolidate-by-href" as="element(c:file)*">
       <xsl:for-each-group select="$raw-list" group-by="@href">
+<!--        <xsl:message select="'CBH: ', @href"></xsl:message>-->
         <xsl:sequence select="."/>
       </xsl:for-each-group>
     </xsl:variable>
+    <xsl:message select="'SUB: ', string-join($consolidate-by-href[descendant::*[@p:type = 'letex:store-debug']]/@href, '  ')"></xsl:message>
     <c:files display-name="index">
-      <xsl:message select="'CBH: ', ' # ', $consolidate-by-href/@href"></xsl:message>
       <xsl:copy-of select="$consolidate-by-href" copy-namespaces="no"/>
     </c:files>
   </xsl:template>
@@ -46,7 +47,6 @@
     priority="4" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
-    <xsl:message select="'tnu: ', base-uri(.)"></xsl:message>
     <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri(.))}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="if ($base-dir-uri-regex) 
@@ -59,12 +59,15 @@
         <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>  
       </xsl:if>
       <xsl:call-template name="process-inner"/>
-<xsl:comment select="'inner: ', */name()"/>
     </c:file>
     <xsl:apply-templates select="p:import" mode="raw-list">
       <xsl:with-param name="example-for" select="()" tunnel="yes"/>
     </xsl:apply-templates>
     <xsl:apply-templates select="(self::p:declare-step | self::p:pipeline)//transpect:examples" mode="#current"/>
+  </xsl:template>
+
+  <xsl:template match="p:pipeinfo" mode="raw-list">
+    <xsl:copy-of select="."/>
   </xsl:template>
 
   <xsl:template match="transpect:examples" mode="raw-list">
@@ -225,7 +228,7 @@
   </xsl:template>
   
 
-  <xsl:template match="@type" mode="raw-list">
+  <xsl:template match="p:*/@type" mode="raw-list">
     <xsl:variable name="context" select=".." as="element()"/>
     <xsl:analyze-string select="." regex="^(.+):(.+)$">
       <xsl:matching-substring>

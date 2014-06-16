@@ -3,6 +3,8 @@
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:c="http://www.w3.org/ns/xproc-step"
   xmlns:cx="http://xmlcalabash.com/ns/extensions" 
+  xmlns:cxf="http://xmlcalabash.com/ns/extensions/fileutils"
+  xmlns:p="http://www.w3.org/ns/xproc"
   xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
   xmlns:letex="http://www.le-tex.de/namespace"
   xmlns:style="http://saxonica.com/ns/html-style-property"
@@ -153,13 +155,13 @@
     </xsl:for-each>
     <xsl:variable name="representation" as="document-node(element(c:files))">
       <xsl:document>
-        <xsl:sequence select="ixsl:page()//*:div[@id = 'pipelines']/*"/>
+        <xsl:sequence select="ixsl:page()//*:div[@id = 'pipelines']/*" />
       </xsl:document>
     </xsl:variable>
     <xsl:result-document href="#transpectdoc" method="ixsl:replace-content">
       <xsl:apply-templates select="$representation//*[@transpect:filename = $page-name]" mode="render-transpectdoc">
         <xsl:with-param name="docroot" select="$representation" tunnel="yes"/>
-      </xsl:apply-templates>  
+      </xsl:apply-templates>
     </xsl:result-document>
   </xsl:template>
   

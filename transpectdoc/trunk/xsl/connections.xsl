@@ -74,12 +74,12 @@
   <!-- a step with a primary input port but without explicit connection to this input port -->
   <xsl:template match="*[transpect:is-step(.) (: is a step (including step declarations) :)]
                         [not(@source-type = ('declare-step', 'pipeline')) (: is not the declaration; rather, a step in a (sub)pipeline :)]
-                        [exists(key('primary-input-decl', name())) (: the step’s declaration declares a primary source port :)]
-                        [not(p:input/@port = key('primary-input-decl', name())/@port)
+                        [exists(key('primary-input-decl', transpect:name(.))) (: the step’s declaration declares a primary source port :)]
+                        [not(p:input/@port = key('primary-input-decl', transpect:name(.))/@port)
                           (: the primary input port hasn’t already been connected explicitly :)]" 
                 mode="make-primary-input-explicit">
     <p:input generated="true">
-      <xsl:copy-of select="key('primary-input-decl', name())/@port"/>
+      <xsl:copy-of select="key('primary-input-decl', transpect:name(.))/@port"/>
       <xsl:comment>a</xsl:comment><xsl:sequence select="transpect:default-readable-port(.)"/><xsl:comment>b</xsl:comment>
     </p:input>
   </xsl:template>
@@ -88,14 +88,14 @@
     because you don’t specify connections for primary output ports): -->
   <xsl:template match="*[transpect:is-step(.)]
                         [not(@source-type = ('declare-step', 'pipeline'))]
-                        [exists(key('primary-output-decl', name()))]
-                        [count(key('primary-output-decl', name())/../p:output) = 1
+                        [exists(key('primary-output-decl', transpect:name(.)))]
+                        [count(key('primary-output-decl', transpect:name(.))/../p:output) = 1
                          or 
-                         not(p:output/@port = key('primary-output-decl', name())/@port)
+                         not(p:output/@port = key('primary-output-decl', transpect:name(.))/@port)
                         ]" 
                 mode="make-primary-output-explicit">
     <p:output generated="true">
-      <xsl:copy-of select="key('primary-output-decl', name())/@port"/>
+      <xsl:copy-of select="key('primary-output-decl', transpect:name(.))/@port"/>
     </p:output>
   </xsl:template>
   
@@ -144,9 +144,12 @@
     <!-- p:for-each, p:choose, p:group or atomic step in a subpipeline -->
     <xsl:variable name="preceding-step" as="element()?" select="$context-or-wrapper/preceding-sibling::*[transpect:is-step(.)][1]"/>
     <xsl:variable name="preceding-steps-output-decl" as="element(p:output)*"
-      select="key('primary-output-decl', $preceding-step/name(), root($context))"/>
+      select="if ($preceding-step) then 
+              key('primary-output-decl', transpect:name($preceding-step), root($context))
+              else ()"/>
     <xsl:if test="count($preceding-steps-output-decl) gt 1">
-      <xsl:message select="'More than one primary output declaration in ', $preceding-steps-output-decl/.., ' ', base-uri($context), ': ', $preceding-steps-output-decl"></xsl:message>
+<!--      <xsl:message select="'More than one primary output declaration in ', $preceding-steps-output-decl/.., ' ', base-uri($context), ': ', $preceding-steps-output-decl"/>-->
+<!--      <xsl:message select="'More than one primary output declaration in ', base-uri($context), ': ', $preceding-steps-output-decl"></xsl:message>-->
     </xsl:if>
     <xsl:choose>
       <xsl:when test="$preceding-steps-output-decl">
