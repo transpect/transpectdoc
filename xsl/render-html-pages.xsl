@@ -524,15 +524,19 @@
   </xsl:template>
 
   <xsl:template match="*" mode="subpipeline">
+    <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
     <xsl:param name="depth" as="xs:integer" tunnel="yes"/>
+    <xsl:variable name="declaration" select="key('step-declaration-by-type', transpect:name(.), $docroot)" as="element(*)?"/>
     <tr>
       <xsl:if test="@p:is-step = 'true' and not(p:output)">
-        <xsl:attribute name="class" select="'local-end'"/>        
+        <xsl:attribute name="class" select="'local-end'"/>
       </xsl:if>
       <td colspan="{$depth}">
         <p class="names">
           <span class="type">
-            <xsl:value-of select="transpect:name(.)"/>
+            <a href="{transpect:page-name($declaration, ())}">
+              <xsl:value-of select="transpect:name(.)"/>
+            </a>
           </span>
           <xsl:if test="@name">
             <xsl:text xml:space="preserve"> </xsl:text>
@@ -546,11 +550,11 @@
       <td>
         <xsl:if test="p:input">
           <dl>
-            <xsl:apply-templates select="p:input" mode="#current"/>    
+            <xsl:apply-templates select="p:input" mode="#current"/>
           </dl>
         </xsl:if>
       </td>
-      <td>        
+      <td>
         <!--<xsl:if test="../@name">
           <xsl:attribute name="id" select="concat('step_', ../@name, '_port_', @port)"/>
         </xsl:if>-->
