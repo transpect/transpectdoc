@@ -19,15 +19,15 @@
                                               'p:input', 
                                               'p:output',
                                               'p:variable',
-                                              'p:documentation'
+                                              'p:documentation',
+                                              'p:xpath-context',
+                                              'p:iteration-source', 
+                                              'p:empty'
                                              )">
         <xsl:sequence select="false()"/>
       </xsl:when>
       <xsl:when test="transpect:name($elt) = ('p:choose', 'p:for-each', 'p:group', 'p:try', 'p:catch')">
         <xsl:sequence select="true()"/>
-      </xsl:when>
-      <xsl:when test="transpect:name($elt) = ('p:input', 'p:output', 'p:option', 'p:xpath-context', 'p:iteration-source', 'p:empty')">
-        <xsl:sequence select="false()"/>
       </xsl:when>
       <!-- pipeline declarations itself and their children (except for the list above)
         qualify as 'steps' for the purpose of this function -->
