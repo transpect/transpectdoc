@@ -29,13 +29,11 @@
     </xsl:variable>
     <xsl:variable name="consolidate-by-href" as="element(c:file)*">
       <xsl:for-each-group select="$raw-list" group-by="@href">
-<!--        <xsl:message select="'CBH: ', @href"></xsl:message>-->
         <xsl:sequence select="."/>
       </xsl:for-each-group>
     </xsl:variable>
-    <xsl:message select="'SUB: ', string-join($consolidate-by-href[descendant::*[@p:type = 'letex:store-debug']]/@href, '  ')"></xsl:message>
     <c:files display-name="index">
-      <xsl:copy-of select="$consolidate-by-href" copy-namespaces="no"/>
+      <xsl:copy-of select="$consolidate-by-href"/>
     </c:files>
   </xsl:template>
   
@@ -60,7 +58,7 @@
       </xsl:if>
       <xsl:call-template name="process-inner"/>
     </c:file>
-    <xsl:apply-templates select="p:import" mode="raw-list">
+    <xsl:apply-templates select="p:import" mode="#current">
       <xsl:with-param name="example-for" select="()" tunnel="yes"/>
     </xsl:apply-templates>
     <xsl:apply-templates select="(self::p:declare-step | self::p:pipeline)//transpect:examples" mode="#current"/>
@@ -81,7 +79,7 @@
                               $c/@dir-uri, 
                               $c/@file, 
                               $catalog
-                            )" use-when="not(contains(system-property('xsl:product-name'), 'Saxon CE'))"/>
+                            )" use-when="not(contains(system-property('xsl:product-name'), 'Saxon-CE'))"/>
     </xsl:variable>
     <!-- there may be duplicates -->
     <xsl:message select="'FILES ', count($files), ' ', count(descendant::transpect:collection), ' ', count(descendant::transpect:file)"></xsl:message>
@@ -101,9 +99,14 @@
   <xsl:function name="transpect:doc" as="document-node(element(*))?">
     <xsl:param name="href" as="xs:string"/>
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?"/>
-    <xsl:apply-templates select="if ($catalog) 
-                           then doc(letex:resolve-uri-by-catalog($href, $catalog))
-                           else doc($href)" mode="transpect:read-doc"/>
+    <xsl:choose>
+      <xsl:when test="$catalog">
+        <xsl:apply-templates select="doc(letex:resolve-uri-by-catalog($href, $catalog))" mode="transpect:read-doc"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates select="doc($href)" mode="transpect:read-doc"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:function>
   
   <xsl:template match="/" mode="transpect:read-doc">
@@ -217,7 +220,7 @@
     <xsl:copy>
       <xsl:attribute name="name" select="generate-id()"/>
       <xsl:attribute name="generated-name" select="'true'"/>
-      <xsl:apply-templates select="@*, node()" mode="raw-list"/>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
   
@@ -251,7 +254,9 @@
   
   <xsl:template match="p:import" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
-    <xsl:apply-templates select="transpect:doc(resolve-uri(@href, base-uri(/*)), $catalog)" mode="#current">
+    <xsl:variable name="href" select="string(resolve-uri(@href, (ancestor::*[@xml:base][1]/@xml:base, base-uri())[1]))" as="xs:string"/>
+    <xsl:message select="'PIU: ', @href, ' ',$href, ' ', letex:resolve-uri-by-catalog($href, $catalog)"></xsl:message>
+    <xsl:apply-templates select="transpect:doc($href, $catalog)" mode="#current">
       <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>

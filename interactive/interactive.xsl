@@ -25,7 +25,8 @@
         <xsl:document>
           <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
             <uri name="http://xmlcalabash.com/extension/steps/library-1.0.xpl" uri="../xpl/lib/library-1.0.xpl"/>
-            <rewriteURI uriStartString="http://transpect.le-tex.de/calabash-extensions/" rewritePrefix="../xpl/lib/"/>
+            <!-- Only resolves if calabash and transpectdoc are on sibling directories: -->
+            <rewriteURI uriStartString="http://transpect.le-tex.de/calabash-extensions/" rewritePrefix="../../calabash/lib/ltx/"/>
           </catalog>
         </xsl:document>
       </xsl:variable>
@@ -95,19 +96,21 @@
   </xsl:template>
   
   <xsl:template match="*[@id = ('process')]" mode="ixsl:onclick">
+    <xsl:variable name="crawl" as="document-node(element(c:files))">
+      <xsl:document>
+        <xsl:call-template name="crawl"/>
+      </xsl:document>
+    </xsl:variable>
+    <xsl:message select="'CRWL: ', $crawl/*/name()"></xsl:message>
     <xsl:result-document href="#pipelines" method="ixsl:replace-content">
-      <xsl:variable name="crawl" as="document-node(element(c:files))">
-        <xsl:document>
-          <xsl:call-template name="crawl"/>  
-        </xsl:document>
-      </xsl:variable>
       <xsl:apply-templates select="$crawl" mode="connect"/>
+<!--      <xsl:sequence select="$crawl"></xsl:sequence>-->
     </xsl:result-document>
-    <ixsl:schedule-action wait="1">
+    <!--<ixsl:schedule-action wait="1">
       <xsl:call-template name="render-for-interactive">
         <xsl:with-param name="page-name" select="'index'"/>
       </xsl:call-template>
-    </ixsl:schedule-action>
+    </ixsl:schedule-action>-->
   </xsl:template>
   
   <xsl:template match="/*" mode="transpect:read-doc" priority="2">
@@ -129,7 +132,7 @@
     </xsl:copy>
   </xsl:template>
     
-  <xsl:template name="raw-list">
+  <xsl:template name="raw-list" as="element(c:file)+">
     <xsl:apply-templates select="ixsl:page()//*:div[@id = 'pipelines']/*" mode="raw-list">
       <xsl:with-param name="catalog" tunnel="yes">
         <xsl:document>
@@ -137,6 +140,14 @@
         </xsl:document>
       </xsl:with-param>
     </xsl:apply-templates>
+  </xsl:template>
+  
+  <!-- Saxon CE cannot create head elements in the DOM, no matter in what namespace they are -->
+  <xsl:template match="*:head" mode="raw-list">
+    <xsl:element name="_head" namespace="{namespace-uri(.)}">
+      <xsl:attribute name="letex:name" select="name()"/>
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
+    </xsl:element>
   </xsl:template>
   
   <xsl:function name="transpect:initial-base-uris" as="xs:string+">
