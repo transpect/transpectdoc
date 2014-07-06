@@ -12,8 +12,8 @@
     <script type="text/javascript" src="https://subversion.le-tex.de/common/saxon-ce/SaxonceDebug/Saxonce.nocache.js"></script>
 <!--    <script type="text/javascript" src="file:/C:/cygwin/home/gerrit/Dev/sxedit/lib/saxon/SaxonceDebug/Saxonce.nocache.js"></script>-->
     <script>
-      var defaultCatalog = "file:/C:/cygwin/home/gerrit/Hogrefe/BookTagSet/repo/xmlcatalog/catalog.xml";
-      // var defaultCatalog = "https://subversion.le-tex.de/common/xmlcatalog/catalog.xml";
+      //var defaultCatalog = "file:/C:/cygwin/home/gerrit/Hogrefe/BookTagSet/repo/xmlcatalog/catalog.xml";
+      var defaultCatalog = "https://subversion.le-tex.de/common/xmlcatalog/catalog.xml";
       var customCatalog = decodeURIComponent(location.search.substring(1))
                           .split(new RegExp('[' + String.fromCharCode(38) + ';]'))
                           .filter(function(s){return s.match(/^catalog=/)})
