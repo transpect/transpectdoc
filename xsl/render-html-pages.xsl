@@ -45,7 +45,7 @@
   </xsl:template>
 
   <xsl:function name="transpect:page-name" as="xs:string">
-    <xsl:param name="elt" as="element(*)"/>
+    <xsl:param name="elt" as="element(*)?"/>
     <xsl:param name="output-base-uri" as="xs:string?"/>
     <xsl:variable name="fragment" as="xs:string"
       select="if ($elt/@name and not($elt/@source-type))
@@ -443,11 +443,11 @@
   </xsl:template>
 
   <xsl:template match="p:input/p:pipe" mode="connections">
-    <!-- p:input in a connection --> 
+    <!-- p:input in a connection §§§§§§§§§§§§§ --> 
     <xsl:variable name="connected-to" as="element(*)" 
-      select="ancestor::*[@source-type = 'declare-step']
+      select="(ancestor::*[@source-type = 'declare-step']
                 /descendant-or-self::*[not(transpect:name(.) = ('p:option', 'p:param', 'p:with-option', 'p:with-param'))]
-                                      [@name = current()/@step]"/>
+                                      [@name = current()/@step])[1]"/>
     <li>
       <a href="{transpect:page-name($connected-to, $output-base-uri)}">
         <xsl:value-of select="transpect:render-display-name(ancestor::*[@source-type = 'declare-step']/@display-name)"/>
