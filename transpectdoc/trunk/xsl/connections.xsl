@@ -69,7 +69,7 @@
     <p:with-option name="{name()}" select="'{.}'" transpect:name="p:with-option"/>
   </xsl:template>
 
-  <xsl:template match="text()[not(normalize-space())]" mode="make-primary-input-explicit make-primary-output-explicit"/>
+  <xsl:template match="text()" mode="make-primary-input-explicit make-primary-output-explicit"/>
 
   <!-- a step with a primary input port but without explicit connection to this input port -->
   <xsl:template match="*[transpect:is-step(.) (: is a step (including step declarations) :)]
@@ -99,6 +99,8 @@
     </p:output>
   </xsl:template>
   
+  <xsl:template match="*" mode="make-primary-output-explicit make-primary-input-explicit"/>
+  
   <!-- the only output port declaration is primary by definition -->
   <xsl:template match="p:output[../@source-type = ('declare-step', 'pipeline')][count(../p:output) = 1]" mode="connect" priority="2">
     <xsl:copy>
@@ -114,12 +116,10 @@
     </p:iteration-source>
   </xsl:template>
 
-  <xsl:template match="*" mode="make-primary-input-explicit"/>
-
   <!-- For a given step in a subsequence, gives the p:pipe connection to
     the default readable port that is present here. It can be used in
     generated p:input elements. -->
-  <xsl:function name="transpect:default-readable-port" as="item()*">
+  <xsl:function name="transpect:default-readable-port" as="element(p:pipe)?">
     <xsl:param name="context" as="element(*)"/>
     <xsl:variable name="context-or-wrapper" as="element(*)">
       <xsl:choose>
@@ -170,6 +170,19 @@
           </xsl:when>
         </xsl:choose>
       </xsl:otherwise>
+    </xsl:choose>
+  </xsl:function>
+
+  <xsl:function name="transpect:primary-output-port" as="element(p:output)">
+    <xsl:param name="step" as="element(*)"/>
+    <xsl:variable name="own-decl" as="element(p:output)" select="key('primary-output-decl', transpect:name($step), root($step))"/>
+    <xsl:choose>
+      <xsl:when test="exists($own-decl)">
+        <xsl:sequence select="$own-decl"/>
+      </xsl:when>
+      <xsl:when test="exists($step/*[transpect:is-step(.)])">
+        <xsl:sequence select="transpect:primary-output-port(($step/*[transpect:is-step(.)])[last()])"/>
+      </xsl:when>
     </xsl:choose>
   </xsl:function>
 
