@@ -267,6 +267,7 @@
         <xsl:apply-templates select="c:step-declarations/c:step-declaration" mode="links"/>
       </xsl:when>
       <xsl:otherwise>
+        <xsl:call-template name="pipeline-visualisation"/>  
         <div class="interface block input">
           <xsl:call-template name="input-declarations"/>  
         </div>
@@ -347,6 +348,37 @@
         </p>
       </xsl:if>
     </div>
+  </xsl:template>
+
+  <xsl:template name="pipeline-visualisation">
+    <xsl:variable name="svg-id" as="xs:string"
+      select="concat(
+                'svg_', 
+                ancestor-or-self::*[@transpect:filename][1]/@transpect:filename
+              )"/>
+    <xsl:variable name="correspondig-svg-image" as="element()?"
+      select="collection()[2]//*:svg[@xml:id eq $svg-id]"/>
+    <xsl:choose>
+      <xsl:when test="$correspondig-svg-image and 
+                      contains($correspondig-svg-image, 'Cannot find Graphviz')">
+        <div class="interface block visualisation">
+          <h3 class="toggle"><a class="pointer">Visualisation</a></h3>
+          <p>The pre-creation of this SVG image needs the Graphviz software installed. 
+            Please inform your project maintainer.</p>
+        </div>
+      </xsl:when>
+      <xsl:when test="$correspondig-svg-image">
+        <div class="interface block visualisation">
+          <h3 class="toggle"><a class="pointer">Visualisation</a></h3>
+          <div class="svg-wrapper">
+            <xsl:sequence select="$correspondig-svg-image"/>
+          </div>
+        </div>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:comment>Something went wrong: no SVG representation available.</xsl:comment>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="input-declarations">
@@ -495,7 +527,7 @@
   </xsl:template>
   
   <xsl:template match="p:documentation" mode="main-html">
-    <div class="documentation">
+    <div class="documentation block">
       <xsl:apply-templates mode="#current"/>
     </div>
   </xsl:template>

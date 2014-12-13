@@ -40,6 +40,18 @@ body {
   border:1px solid #dcb;
 }
 
+div.visualisation {
+  border:0.15em dotted #eda;
+}
+
+div.visualisation text {
+  font-family:Calibri,Lucida,sans-serif !important;
+}
+
+div.visualisation div.svg-wrapper {
+  text-align: center;
+}
+
 div.output {
   background-color:#f93;
 }
