@@ -32,7 +32,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <h4>Adding Examples for Dynamically Evaluated Pipelines</h4>
     <p>If your pipeline loads and executes pipelines at runtime, i.e., pipelines that are not known statically in advance,
     you may provide examples for these pipelines. Example:</p>
-    <pre><code>&lt;bc:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
+    <pre><code>&lt;transpect:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
   …
   &lt;p:pipeinfo>
     &lt;examples xmlns="http://www.le-tex.de/namespace/transpect"> 
@@ -40,11 +40,11 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
       &lt;generator-collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="hub2hobots/hub2hobots.xpl.xsl"/>
     &lt;/examples>
   &lt;/p:pipeinfo>
-&lt;/bc:dynamic-transformation-pipeline</code></pre>
+&lt;/transpect:dynamic-transformation-pipeline</code></pre>
     <p>Please note that the <code>generator-collection</code> element is not implemted yet. It is meant for holding pointers to 
       XSLT stylesheets that generate the dynamically evaluated pipelines.</p>
     <p>There is an optional attribute <code>@for</code> on the <code>examples</code> element:</p>
-    <pre>&lt;bc:evolve-hub name="evolve-hub-dyn" srcpaths="yes">
+    <pre>&lt;transpect:evolve-hub name="evolve-hub-dyn" srcpaths="yes">
   …
   &lt;p:pipeinfo>
     &lt;examples xmlns="http://www.le-tex.de/namespace/transpect" 
@@ -53,11 +53,11 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
       &lt;generator-collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="evolve-hub/driver.xpl.xsl"/>
     &lt;/examples>
   &lt;/p:pipeinfo>
-&lt;/bc:evolve-hub></pre>
-    <p>Since the examples to the evolve-hub <code>bc:dynamic-transformation-pipeline</code> will vary from project to project,
-    it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the <code>bc:evolve-hub</code>
+&lt;/transpect:evolve-hub></pre>
+    <p>Since the examples to the evolve-hub <code>transpect:dynamic-transformation-pipeline</code> will vary from project to project,
+    it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the <code>transpect:evolve-hub</code>
     invocation in your project’s pipeline. In the <code>@for</code> attribute, you tell transpectdoc that the examples are for the input port called 'pipeline'
-      of <code>bc:dynamic-transformation-pipeline</code> (provided that this port has an xml:id of 'eval-pipeline').</p>
+      of <code>transpect:dynamic-transformation-pipeline</code> (provided that this port has an xml:id of 'eval-pipeline').</p>
   </p:documentation>
   
   <p:pipeinfo>
