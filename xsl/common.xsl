@@ -54,4 +54,9 @@
     <xsl:param name="elt" as="element(*)?"/>
     <xsl:sequence select="($elt/@transpect:name, name($elt))[1]"/>
   </xsl:function>
+
+  <xsl:function name="transpect:jsonify" as="xs:string?">
+    <xsl:param name="str" as="xs:string*"/>
+    <xsl:sequence select="replace(string-join($str, ''), '&quot;', '\\&quot;')"/>
+  </xsl:function>
 </xsl:stylesheet>
