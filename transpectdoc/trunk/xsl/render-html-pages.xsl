@@ -25,6 +25,7 @@
   <xsl:template match="c:files" mode="render-transpectdoc">
     <xsl:call-template name="page"/>
     <xsl:apply-templates select="c:file" mode="#current"/>
+    <xsl:call-template name="create-json"/>
   </xsl:template>
 
   <xsl:template match="c:file[@source-type = library]" mode="render-transpectdoc">
@@ -885,6 +886,114 @@
     <!-- &quot; escaping missing -->
     <xsl:value-of select="."/>
     <xsl:text>"</xsl:text>
+  </xsl:template>
+
+  <xsl:template name="create-json">
+    <xsl:result-document href="{concat(
+                                  if ($output-base-uri)
+                                  then concat($output-base-uri, '/')
+                                  else '', 
+                                  'steps.json'
+                                )}">
+      <bogo>
+        <xsl:text>{</xsl:text>
+        <xsl:for-each-group select="//*[@p:type]" group-by="@type-prefix">
+          <xsl:sort select="current-grouping-key()"/>
+          <xsl:text>"</xsl:text>
+          <xsl:value-of select="concat(current-grouping-key(), ':…')"/>
+          <xsl:text>":{</xsl:text>
+          <xsl:for-each-group select="current-group()"
+            group-by="(ancestor::c:file[@source-type = 'library']/@display-name, '')[1]">
+            <xsl:sort select="current-grouping-key()"/>
+            <xsl:choose>
+              <xsl:when test="current-grouping-key() = ''">
+                <xsl:call-template name="create-json-step-entry">
+                  <xsl:with-param name="step-name" select="transpect:render-display-name(@p:type)"/>
+                </xsl:call-template>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:text>"</xsl:text>
+                <xsl:value-of select="current-grouping-key()"/>
+                <xsl:text>":{</xsl:text>
+                <xsl:for-each select="current-group()">
+                  <xsl:call-template name="create-json-step-entry">
+                    <xsl:with-param name="step-name" select="@p:type"/>
+                  </xsl:call-template>
+                  <xsl:if test="position() != last()">
+                    <xsl:text>,</xsl:text>
+                  </xsl:if>
+                </xsl:for-each>
+                <xsl:text>}</xsl:text>
+              </xsl:otherwise>
+            </xsl:choose>
+            <xsl:if test="position() != last()">
+              <xsl:text>,</xsl:text>
+            </xsl:if>
+          </xsl:for-each-group>
+          <xsl:text>}</xsl:text>
+          <xsl:if test="position() != last()">
+            <xsl:text>,</xsl:text>
+          </xsl:if>
+        </xsl:for-each-group>
+        <xsl:text>}</xsl:text>
+      </bogo>
+    </xsl:result-document>
+  </xsl:template>
+
+  <xsl:template name="create-json-step-entry">
+    <xsl:param name="step-name"/>
+    <xsl:message select="'    - step entry:', $step-name"/>
+    <xsl:text>"</xsl:text>
+    <xsl:value-of select="$step-name"/>
+    <xsl:text>":{</xsl:text>
+    <xsl:text>"step-is-used":</xsl:text>
+    <xsl:value-of select="if(key('used-step', @p:type, root(.))) then 'true' else 'false'"/>
+    <xsl:text>,"import-uri": "</xsl:text>
+    <xsl:value-of select="if(@canonical-href) 
+                          then @canonical-href 
+                          else @project-relative-path"/>
+    <xsl:text>",</xsl:text>
+    <xsl:text>"save-url": "</xsl:text>
+    <xsl:value-of select="@href"/>
+    <xsl:text>",</xsl:text>
+    <xsl:for-each-group select="p:input, p:output" group-by="local-name()">
+      <xsl:text>"</xsl:text>
+      <xsl:value-of select="current-grouping-key()"/>
+      <xsl:text>-ports": {</xsl:text>
+      <xsl:for-each select="current-group()">
+        <xsl:value-of select="concat('&quot;', @port, '&quot;:{')"/>
+        <xsl:for-each select="@sequence, @primary, @kind">
+          <xsl:value-of select="concat('&quot;', local-name(), '&quot;:&quot;', ., '&quot;')"/>
+          <xsl:if test="position() != last()">
+            <xsl:text>,</xsl:text>
+          </xsl:if>
+        </xsl:for-each>
+        <xsl:text>}</xsl:text>
+        <xsl:if test="position() != last()">
+          <xsl:text>,</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+      <xsl:text>}, </xsl:text>
+    </xsl:for-each-group>
+    <xsl:text>"options": {</xsl:text>
+    <xsl:for-each select="p:option">
+      <xsl:value-of select="concat('&quot;', @name, '&quot;:{')"/>
+      <xsl:for-each select="@required, @select">
+        <xsl:value-of select="concat(
+                                '&quot;', local-name(), '&quot;:',
+                                '&quot;', transpect:jsonify(.), '&quot;'
+                              )"/>
+        <xsl:if test="position() != last()">
+          <xsl:text>,</xsl:text>
+        </xsl:if>
+      </xsl:for-each>
+      <xsl:text>}</xsl:text>
+      <xsl:if test="position() != last()">
+        <xsl:text>,</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:text>}</xsl:text><!-- options -->
+    <xsl:text>}</xsl:text><!-- step entry-->
   </xsl:template>
 
 </xsl:stylesheet>

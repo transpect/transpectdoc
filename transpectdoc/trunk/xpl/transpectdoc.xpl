@@ -234,7 +234,9 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:iteration-source>
       <p:pipe port="secondary" step="render"/>
     </p:iteration-source>
-    <p:store omit-xml-declaration="false" method="xhtml">
+    <p:store omit-xml-declaration="false">
+      <p:with-option name="method" 
+        select="if(ends-with(base-uri(), 'json')) then 'text' else 'xhtml'"/>
       <p:with-option name="href" select="base-uri()"/>
     </p:store>
   </p:for-each>
