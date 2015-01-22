@@ -15,6 +15,7 @@
   <xsl:include href="common.xsl"/>
 
   <xsl:param name="project-root-uri" as="xs:string?"/>
+  <xsl:param name="treat-use-when-as" as="xs:string?" select="'ignore'"/>
 
   <xsl:variable name="base-dir-uri-regex" as="xs:string?" 
     select="if ($project-root-uri)
@@ -202,6 +203,8 @@
   <xsl:template match="@*" mode="raw-list">
     <xsl:copy/>
   </xsl:template>
+
+  <xsl:template match="*[@use-when][$treat-use-when-as = 'ignore']" mode="raw-list" priority="2"/>
 
   <xsl:template match="*" mode="raw-list">
     <xsl:copy>

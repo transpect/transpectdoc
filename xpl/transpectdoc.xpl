@@ -81,10 +81,6 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:document href="../xsl/connections.xsl"/>
   </p:input>
 
-  <p:input port="plantuml-xslt">
-    <p:document href="../xsl/connections2plantuml.xsl"/>
-  </p:input>
-
   <p:input port="rendering-xslt">
     <p:document href="../xsl/render-html-pages.xsl"/>
   </p:input>
@@ -160,65 +156,8 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
   </letex:store-debug>
 
-  <p:xslt name="connections2plantuml" initial-mode="plantuml">
-    <p:documentation>Generates plantuml text syntax 
-      wrapped in plantuml elements.</p:documentation>
-    <p:input port="parameters"><p:empty/></p:input>
-    <p:input port="stylesheet">
-      <p:pipe port="plantuml-xslt" step="transpectdoc"/>
-    </p:input>
-    <p:with-param name="output-base-uri" select="$output-base-uri"/>
-  </p:xslt>
-
-  <cx:message message="*** Creating svg representations ..."/>
-
-  <p:sink/>
-
-
-  <p:for-each name="create-plantuml">
-    <p:iteration-source select="/plantuml-wrapper/plantuml">
-      <p:pipe port="result" step="connections2plantuml"/>
-    </p:iteration-source>
-    <p:try name="plantuml-to-svg">
-      <p:group>
-        <cx:plantuml>
-          <p:with-option name="format" select="'svg'"/>
-        </cx:plantuml>
-      </p:group>
-      <p:catch>
-        <p:identity>
-          <p:input port="source">
-            <p:inline>
-              <c:plantuml-lib-error/>
-            </p:inline>
-          </p:input>
-        </p:identity>
-      </p:catch>
-    </p:try>
-    <p:add-attribute match="*:svg" attribute-name="xml:id">
-      <p:with-option name="attribute-value" select="/*/@xml:id">
-        <p:pipe port="current" step="create-plantuml"/>
-      </p:with-option>
-    </p:add-attribute>
-  </p:for-each>
-
-  <p:wrap-sequence name="svg-seq-wrapping" wrapper="svg-wrapper"/>
-
-  <letex:store-debug pipeline-step="transpectdoc/2.plantuml">
-    <p:with-option name="active" select="$debug"/>
-    <p:with-option name="base-uri" select="$debug-dir-uri"/>
-  </letex:store-debug>
-
-  <cx:message message="*** Creating html rendering ..."/>
-
-  <p:sink/>
-
   <p:xslt name="render" initial-mode="render-transpectdoc">
     <p:input port="parameters"><p:empty/></p:input>
-    <p:input port="source">
-      <p:pipe port="result" step="connections"/>
-      <p:pipe port="result" step="svg-seq-wrapping"/>
-    </p:input>
     <p:input port="stylesheet">
       <p:pipe port="rendering-xslt" step="transpectdoc"/>
     </p:input>

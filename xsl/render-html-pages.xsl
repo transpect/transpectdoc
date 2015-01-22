@@ -460,6 +460,8 @@
     </tr>
   </xsl:template>
   
+  <xsl:template match="p:output/p:documentation" mode="connections"/>
+  
   <xsl:template match="p:input" mode="connections">
     <xsl:param name="docroot" select="/" tunnel="yes" as="document-node(element(c:files))"/>
     <!-- context: p:input in a step declaration -->
@@ -467,6 +469,7 @@
       select="key('transpect:step', current()/../@p:type, $docroot)/p:input[@port = current()/@port]/p:pipe"/>
     <xsl:variable name="connection-list-items" as="element(html:li)*">
       <xsl:apply-templates mode="#current" select="$pipes"/>
+      <xsl:apply-templates select="p:document" mode="#current"/>
     </xsl:variable>
     <xsl:if test="exists($connection-list-items)">
       <ul class="connections">
@@ -475,6 +478,9 @@
     </xsl:if>
   </xsl:template>
 
+  <xsl:template match="p:input/p:document" mode="connections">
+    <li>Default document: <code><xsl:value-of select="@href"/></code></li>
+  </xsl:template>
   <xsl:template match="p:input/p:pipe" mode="connections">
     <!-- p:input in a connection §§§§§§§§§§§§§ --> 
     <xsl:variable name="connected-to" as="element(*)" 
@@ -499,7 +505,7 @@
   <xsl:template match="p:option" mode="main-html">
     <tr>
       <td>
-        <p class="option">
+        <p class="option" id="option_{@name}">
           <span class="name">
             <xsl:value-of select="@name"/>
           </span>
@@ -527,8 +533,14 @@
     </tr>
   </xsl:template>
   
-  <xsl:template match="p:documentation" mode="main-html">
+  <xsl:template match="c:file/p:documentation | c:step-declaration/p:documentation" mode="main-html" priority="2">
     <div class="documentation block">
+      <xsl:apply-templates mode="#current"/>
+    </div>
+  </xsl:template>
+  
+  <xsl:template match="p:documentation" mode="main-html">
+    <div class="documentation">
       <xsl:apply-templates mode="#current"/>
     </div>
   </xsl:template>
@@ -994,6 +1006,66 @@
     </xsl:for-each>
     <xsl:text>}</xsl:text><!-- options -->
     <xsl:text>}</xsl:text><!-- step entry-->
+  </xsl:template>
+
+  <xsl:template match="html:a[@href]" mode="main-html">
+    <!-- internal links to other steps. -->
+    <xsl:variable name="atts" as="attribute(*)+">
+      <xsl:analyze-string select="@href"
+        regex="^((https?:[^?#]+?)(\?[^#]+)?(#.+)?|(https?:[^?#]+?)?(\?[^#]+)(#.+)?|(https?:[^?#]+?)?(\?[^#]+)?(#.+))$">
+        <xsl:matching-substring>
+          <xsl:attribute name="main" select="string-join((regex-group(2), regex-group(5), regex-group(8)), '')"/>
+          <xsl:variable name="query" as="xs:string" 
+            select="string-join((regex-group(3), regex-group(6), regex-group(9)), '')"/>
+          <xsl:if test="normalize-space($query)">
+            <xsl:analyze-string select="tokenize($query, '[&amp;?]')[normalize-space()]" regex="(\i\c+)=(.+)">
+              <xsl:matching-substring>
+                <xsl:attribute name="{regex-group(1)}" select="regex-group(2)"/>
+              </xsl:matching-substring>
+            </xsl:analyze-string>  
+          </xsl:if>
+          <xsl:attribute name="frag" select="string-join((regex-group(4), regex-group(7), regex-group(10)), '')"/>
+        </xsl:matching-substring>
+        <xsl:non-matching-substring>
+          <xsl:attribute name="main" select="."/>
+        </xsl:non-matching-substring>
+      </xsl:analyze-string>
+    </xsl:variable>
+    <xsl:variable name="transf" as="attribute(*)+">
+      <xsl:apply-templates select="$atts" mode="resolve-links">
+        <xsl:with-param name="root" select="/" tunnel="yes"/>
+      </xsl:apply-templates>  
+    </xsl:variable>
+    <xsl:copy>
+      <xsl:attribute name="href" select="concat($transf[name()='main'], $transf[name()='frag'])"/>
+      <xsl:apply-templates select="@* except @href, node()" mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="@*[not(normalize-space())]" mode="resolve-links" priority="2"/>
+
+  <xsl:template match="@*" mode="resolve-links" >
+    <xsl:copy/>
+  </xsl:template>
+
+  <xsl:key name="by-canonical-href" match="c:file[@canonical-href]" use="@canonical-href"/>
+  
+  <xsl:template match="@main" mode="resolve-links">
+    <xsl:param name="root" as="document-node()" tunnel="yes"/>
+    <xsl:variable name="named-step" as="element(c:file)?" select="key('by-canonical-href', ., $root)"/>
+    <xsl:choose>
+      <xsl:when test="$named-step">
+        <xsl:attribute name="main" select="concat($named-step/@transpect:filename, '.html')"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:sequence select="."/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  
+  <xsl:template match="@type" mode="resolve-links">
+    <xsl:param name="root" as="document-node()" tunnel="yes"/>
+    <xsl:attribute name="main" select="concat(key('step-declaration-by-type', ., $root)/@transpect:filename, '.html')"/>
   </xsl:template>
 
 </xsl:stylesheet>
