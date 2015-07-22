@@ -3,8 +3,10 @@
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:c="http://www.w3.org/ns/xproc-step"
   xmlns:p="http://www.w3.org/ns/xproc"
+  xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
   xmlns:transpect="http://www.le-tex.de/namespace/transpect"
   xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:rng="http://relaxng.org/ns/structure/1.0"
   xmlns="http://www.w3.org/1999/xhtml"
   exclude-result-prefixes="c xs transpect"
   version="2.0">
@@ -947,6 +949,57 @@
             <xsl:text>,</xsl:text>
           </xsl:if>
         </xsl:for-each-group>
+        
+        <!-- XProc 1.0 standard steps -->
+        <xsl:variable name="xproc1-and-steps1-rng" as="element()*">
+          <grammar xmlns="http://relaxng.org/ns/structure/1.0">
+            <xsl:sequence select="doc('http://www.w3.org/TR/xproc/schema/1.0/xproc.rng')/rng:grammar/node()"/>
+            <xsl:sequence select="doc('http://www.w3.org/TR/xproc/schema/1.0/steps.rng')/rng:grammar/node()"/>
+          </grammar>
+        </xsl:variable>
+        <xsl:for-each select="$xproc1-and-steps1-rng
+                                //rng:define[
+                                  not(@name eq 'OtherStep') and
+                                  @name = root(.)//rng:define[@name = ('StandardStep', 'Subpipeline')]//rng:ref/@name
+                                ]">
+          <xsl:text>, "p:</xsl:text>
+          <xsl:value-of select="(rng:element/@name, lower-case(@name))[1]"/>
+          <xsl:text>":{</xsl:text>
+          <xsl:for-each select="rng:element/a:documentation[matches(., '^(In|Out)put port:')]">
+            <xsl:variable name="normalized" as="xs:string"
+              select="replace(normalize-space(.), '(In|Out)put\sport:\s|&#xa;|\n|(\.$)', '')"/>
+            <xsl:variable name="port-type" as="xs:string"
+              select="lower-case(replace(replace(normalize-space(.), '&#xa;|\n', ''), '^((In|Out)put).+', '$1'))"/>
+            <xsl:text>"</xsl:text>
+            <xsl:value-of select="$port-type"/>
+            <xsl:text>-ports": {</xsl:text>
+            <xsl:variable name="prepared" as="xs:string"
+              select="replace($normalized, '([a-z]+\s\()', 'BRACKGROUPSTART$1')"/>
+            <xsl:for-each select="tokenize($prepared, '\)+,*|,?\s?BRACKGROUPSTART')[. ne '']">
+              <xsl:text>"</xsl:text>
+              <xsl:value-of select="replace(., '^\s*([a-z]+).*$', '$1')"/>
+              <xsl:text>"</xsl:text>
+              <xsl:text>:{</xsl:text>
+              <xsl:for-each select="tokenize(replace(., '^\s*([a-z]+)\s*\(?(.*)$', '$2'), ',\s*')">
+                <xsl:text>"</xsl:text>
+                <xsl:value-of select="replace(current(), '[&quot;]', '')"/>
+                <xsl:text>": true</xsl:text>
+                <xsl:if test="position() != last()">
+                  <xsl:text>,</xsl:text>
+                </xsl:if>
+              </xsl:for-each>
+              <xsl:text>}</xsl:text>
+              <xsl:if test="position() != last()">
+                <xsl:text>,</xsl:text>
+              </xsl:if>
+            </xsl:for-each>
+            <xsl:text>}</xsl:text><!-- end: input or output port-->
+            <xsl:if test="position() != last()">
+              <xsl:text>,</xsl:text>
+            </xsl:if>
+          </xsl:for-each>
+          <xsl:text>}</xsl:text><!-- end of p:* -->
+        </xsl:for-each>
         <xsl:text>}</xsl:text>
       </bogo>
     </xsl:result-document>
@@ -954,7 +1007,7 @@
 
   <xsl:template name="create-json-step-entry">
     <xsl:param name="step-name"/>
-    <xsl:message select="'    - step entry:', $step-name"/>
+    <!--<xsl:message select="'    - step entry:', $step-name"/>-->
     <xsl:text>"</xsl:text>
     <xsl:value-of select="$step-name"/>
     <xsl:text>":{</xsl:text>
