@@ -258,7 +258,7 @@
   <xsl:template match="p:import" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
     <xsl:variable name="href" select="string(resolve-uri(@href, (ancestor::*[@xml:base][1]/@xml:base, base-uri())[1]))" as="xs:string"/>
-    <xsl:message select="'PIU: ', @href, ' ',$href, ' ', letex:resolve-uri-by-catalog($href, $catalog)"></xsl:message>
+    <!--<xsl:message select="'PIU: ', @href, ' ',$href, ' ', letex:resolve-uri-by-catalog($href, $catalog)"/>-->
     <xsl:apply-templates select="transpect:doc($href, $catalog)" mode="#current">
       <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
     </xsl:apply-templates>
