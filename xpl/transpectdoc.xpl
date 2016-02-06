@@ -5,7 +5,7 @@
   xmlns:cx="http://xmlcalabash.com/ns/extensions"
   xmlns:cxf="http://xmlcalabash.com/ns/extensions/fileutils" 
   xmlns:pxf="http://exproc.org/proposed/steps/file"
-  xmlns:letex="http://www.le-tex.de/namespace"
+  xmlns:tr="http://transpect.io"
   exclude-inline-prefixes="#all"
   version="1.0"
   name="transpectdoc">
@@ -32,38 +32,38 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <h4>Adding Examples for Dynamically Evaluated Pipelines</h4>
     <p>If your pipeline loads and executes pipelines at runtime, i.e., pipelines that are not known statically in advance,
     you may provide examples for these pipelines. Example:</p>
-    <pre><code>&lt;transpect:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
+    <pre><code>&lt;tr:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
   …
   &lt;p:pipeinfo>
-    &lt;examples xmlns="http://www.le-tex.de/namespace/transpect"> 
-      &lt;collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="hub2hobots/hub2hobots.xpl"/>
-      &lt;generator-collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="hub2hobots/hub2hobots.xpl.xsl"/>
+    &lt;examples xmlns="http://transpect.io"> 
+      &lt;collection dir-uri="http://this.transpect.io/a9s/" file="hub2hobots/hub2hobots.xpl"/>
+      &lt;generator-collection dir-uri="http://this.transpect.io/a9s/" file="hub2hobots/hub2hobots.xpl.xsl"/>
     &lt;/examples>
   &lt;/p:pipeinfo>
-&lt;/transpect:dynamic-transformation-pipeline</code></pre>
+&lt;/tr:dynamic-transformation-pipeline</code></pre>
     <p>Please note that the <code>generator-collection</code> element is not implemted yet. It is meant for holding pointers to 
       XSLT stylesheets that generate the dynamically evaluated pipelines.</p>
     <p>There is an optional attribute <code>@for</code> on the <code>examples</code> element:</p>
-    <pre>&lt;transpect:evolve-hub name="evolve-hub-dyn" srcpaths="yes">
+    <pre>&lt;tr:evolve-hub name="evolve-hub-dyn" srcpaths="yes">
   …
   &lt;p:pipeinfo>
-    &lt;examples xmlns="http://www.le-tex.de/namespace/transpect" 
-      for="http://transpect.le-tex.de/book-conversion/converter/xpl/dynamic-transformation-pipeline.xpl#eval-pipeline">
-      &lt;collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="evolve-hub/driver.xpl"/>
-      &lt;generator-collection dir-uri="http://customers.le-tex.de/generic/book-conversion/adaptions/" file="evolve-hub/driver.xpl.xsl"/>
+    &lt;examples xmlns="http://transpect.io" 
+      for="http://transpect.io/cascade/xpl/dynamic-transformation-pipeline.xpl#eval-pipeline">
+      &lt;collection dir-uri="http://this.transpect.io/a9s/" file="evolve-hub/driver.xpl"/>
+      &lt;generator-collection dir-uri="http://this.transpect.io/a9s/" file="evolve-hub/driver.xpl.xsl"/>
     &lt;/examples>
   &lt;/p:pipeinfo>
-&lt;/transpect:evolve-hub></pre>
-    <p>Since the examples to the evolve-hub <code>transpect:dynamic-transformation-pipeline</code> will vary from project to project,
-    it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the <code>transpect:evolve-hub</code>
+&lt;/tr:evolve-hub></pre>
+    <p>Since the examples to the evolve-hub <code>tr:dynamic-transformation-pipeline</code> will vary from project to project,
+    it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the <code>tr:evolve-hub</code>
     invocation in your project’s pipeline. In the <code>@for</code> attribute, you tell transpectdoc that the examples are for the input port called 'pipeline'
-      of <code>transpect:dynamic-transformation-pipeline</code> (provided that this port has an xml:id of 'eval-pipeline').</p>
+      of <code>tr:dynamic-transformation-pipeline</code> (provided that this port has an xml:id of 'eval-pipeline').</p>
   </p:documentation>
   
   <p:pipeinfo>
-    <depends-on xmlns="http://www.le-tex.de/namespace/transpect">
-      <module href="http://transpect.le-tex.de/xslt-util/xslt-based-catalog-resolver/" min-version="r1688"/>
-      <module href="http://transpect.le-tex.de/xproc-util/store-debug/" min-version="r1183"/>
+    <depends-on xmlns="http://transpect.io">
+      <module href="http://transpect.io/xslt-util/xslt-based-catalog-resolver/" min-version="r1688"/>
+      <module href="http://transpect.io/xproc-util/store-debug/" min-version="r1183"/>
     </depends-on>
   </p:pipeinfo>
   
@@ -104,8 +104,8 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
   <p:option name="project-root-uri" required="false" select="resolve-uri('../..', static-base-uri())"/>
 
   <p:import href="http://xmlcalabash.com/extension/steps/library-1.0.xpl"/>
-  <p:import href="http://transpect.le-tex.de/xproc-util/store-debug/store-debug.xpl"/>
-  <p:import href="http://transpect.le-tex.de/calabash-extensions/ltx-lib.xpl" />
+  <p:import href="http://transpect.io/xproc-util/store-debug/xpl/store-debug.xpl"/>
+  <p:import href="http://transpect.io/calabash-extensions/transpect-lib.xpl" />
   
   <p:variable name="base-dir-system-path" 
               select="replace(
@@ -134,10 +134,10 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     </p:input>
   </p:xslt>
   
-  <letex:store-debug pipeline-step="transpectdoc/1.crawl">
+  <tr:store-debug pipeline-step="transpectdoc/1.crawl">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
-  </letex:store-debug>
+  </tr:store-debug>
 
   <cx:message message="*** Connecting primary ports ..."/>
 
@@ -151,10 +151,10 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     </p:input>
   </p:xslt>
   
-  <letex:store-debug pipeline-step="transpectdoc/2.connect">
+  <tr:store-debug pipeline-step="transpectdoc/2.connect">
     <p:with-option name="active" select="$debug"/>
     <p:with-option name="base-uri" select="$debug-dir-uri"/>
-  </letex:store-debug>
+  </tr:store-debug>
 
   <p:xslt name="render" initial-mode="render-transpectdoc">
     <p:input port="parameters"><p:empty/></p:input>
@@ -201,7 +201,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p:with-option name="target" select="concat($output-base-uri, '/transpectdoc.js')"/>
   </cxf:copy>
 
-  <letex:unzip name="unzip-highlight-js" overwrite="yes">
+  <tr:unzip name="unzip-highlight-js" overwrite="yes">
     <p:with-option name="zip" select="replace(
                                         resolve-uri('../lib/highlight.zip', static-base-uri()), 
                                         '^file:/+(([a-z]:)/)?', 
@@ -211,7 +211,7 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
       <p:documentation>Aaargh</p:documentation>
     </p:with-option>
     <p:with-option name="dest-dir" select="concat($base-dir-system-path, '/highlight')"/>
-  </letex:unzip>
+  </tr:unzip>
 
   <p:sink/>
   

@@ -3,10 +3,10 @@
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:c="http://www.w3.org/ns/xproc-step"
   xmlns:p="http://www.w3.org/ns/xproc"
-  xmlns:transpect="http://www.le-tex.de/namespace/transpect"
+  xmlns:tr="http://transpect.io"
   xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.w3.org/1999/xhtml"
-  exclude-result-prefixes="c xs transpect html"
+  exclude-result-prefixes="c xs tr html"
   version="2.0">
   
 

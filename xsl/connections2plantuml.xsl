@@ -3,8 +3,8 @@
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:c="http://www.w3.org/ns/xproc-step"
   xmlns:p="http://www.w3.org/ns/xproc"
-  xmlns:transpect="http://www.le-tex.de/namespace/transpect"
-  exclude-result-prefixes="xs transpect p c"
+  xmlns:tr="http://transpect.io"
+  exclude-result-prefixes="xs tr p c"
   version="2.0">
 
   <xsl:template match="c:files" mode="plantuml">
@@ -32,9 +32,9 @@
   -->
 
   <xsl:template name="page">
-    <plantuml xml:id="svg_{ancestor-or-self::*[@transpect:filename][1]/@transpect:filename}">
+    <plantuml xml:id="svg_{ancestor-or-self::*[@tr:filename][1]/@tr:filename}">
     <xsl:variable name="component" as="xs:string"
-      select="concat('[&lt;b>', (@p:type, @transpect:filename)[1], '&lt;/b>\n(', count(p:option), ' options)]')"/>
+      select="concat('[&lt;b>', (@p:type, @tr:filename)[1], '&lt;/b>\n(', count(p:option), ' options)]')"/>
 @startuml
 <xsl:for-each select="p:input">
   <xsl:value-of select="concat(

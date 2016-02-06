@@ -5,9 +5,8 @@
   xmlns:cx="http://xmlcalabash.com/ns/extensions" 
   xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
   xmlns:p="http://www.w3.org/ns/xproc"
-  xmlns:letex="http://www.le-tex.de/namespace"
-  xmlns:transpect="http://www.le-tex.de/namespace/transpect"
-  exclude-result-prefixes="c cx xs letex transpect"
+  xmlns:tr="http://transpect.io"
+  exclude-result-prefixes="c cx xs tr"
   version="2.0">
   
   <xsl:import href="../interactive/resolver/resolve-uri-by-catalog.xsl"/>
@@ -22,7 +21,7 @@
             then replace($project-root-uri, '^file:/+', 'file:/+')
             else ()"/>
 
-  <xsl:key name="by-href" match="*[@xml:id]" use="string-join((ancestor::*[transpect:is-step(.)][@href][1]/@href, @xml:id), '#')"/>
+  <xsl:key name="by-href" match="*[@xml:id]" use="string-join((ancestor::*[tr:is-step(.)][@href][1]/@href, @xml:id), '#')"/>
 
   <xsl:template name="crawl" as="element(c:files)">
     <xsl:variable name="raw-list" as="element(c:file)*">
@@ -33,9 +32,48 @@
         <xsl:sequence select="."/>
       </xsl:for-each-group>
     </xsl:variable>
+    <xsl:variable name="duplicate-types" as="element(c:group)*">
+      <xsl:for-each-group select="$consolidate-by-href/descendant-or-self::*[@p:type]" group-by="@p:type">
+        <xsl:if test="count(current-group()) gt 1">
+          <c:group type="{current-grouping-key()}">
+            <!-- These should only be redundant declarations of extension steps. Need to verify this and
+              raise an error if not. For the time being, we select the declaration that is best documented… -->
+            <xsl:variable name="maxdocs" as="xs:integer" 
+              select="xs:integer(max(for $item in current-group() return count($item//p:documentation)))"/>
+            <xsl:variable name="winner" as="element(*)" select="(current-group()[count(.//p:documentation) = $maxdocs])[1]"/>
+            <xsl:for-each select="current-group()">
+              <c:member href="{ancestor-or-self::*[@href][1]/@href}">
+                <xsl:if test="not(. is $winner)">
+                  <xsl:attribute name="sort-out" select="'true'"/>
+                </xsl:if>
+                <xsl:sequence select="."/>
+              </c:member>
+            </xsl:for-each>
+          </c:group>  
+        </xsl:if>
+      </xsl:for-each-group>
+    </xsl:variable>
     <c:files display-name="index">
-      <xsl:copy-of select="$consolidate-by-href"/>
+      <xsl:apply-templates select="$consolidate-by-href" mode="remove-duplicate-declarations">
+        <xsl:with-param name="duplicate-list" select="$duplicate-types" as="element(c:group)*" tunnel="yes"/>
+      </xsl:apply-templates>
     </c:files>
+  </xsl:template>
+  
+  <xsl:template match="* | @*" mode="remove-duplicate-declarations">
+    <xsl:copy copy-namespaces="no">
+      <xsl:apply-templates select="@*, node()" mode="#current"/>
+    </xsl:copy>
+  </xsl:template>
+  
+  <xsl:template match="*[@p:type]" mode="remove-duplicate-declarations">
+    <xsl:param name="duplicate-list" as="element(c:group)*" tunnel="yes"/>
+    <xsl:choose>
+      <xsl:when test="$duplicate-list[@type = current()/@p:type]/c:member[@href = current()/ancestor-or-self::*[@href][1]/@href]/@sort-out"/>
+      <xsl:otherwise>
+        <xsl:next-match/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   
   <!--<xsl:template match="text()" mode="raw-list"/>-->
@@ -46,7 +84,7 @@
     priority="4" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
     <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
-    <c:file source-type="{local-name()}" href="{transpect:normalize-uri(base-uri(.))}">
+    <c:file source-type="{local-name()}" href="{tr:normalize-uri(base-uri(.))}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="if ($base-dir-uri-regex) 
                 then replace(base-uri(/*), $base-dir-uri-regex, '')
@@ -62,28 +100,28 @@
     <xsl:apply-templates select="p:import" mode="#current">
       <xsl:with-param name="example-for" select="()" tunnel="yes"/>
     </xsl:apply-templates>
-    <xsl:apply-templates select="(self::p:declare-step | self::p:pipeline)//transpect:examples" mode="#current"/>
+    <xsl:apply-templates select="(self::p:declare-step | self::p:pipeline)//tr:examples" mode="#current"/>
   </xsl:template>
 
   <xsl:template match="p:pipeinfo" mode="raw-list">
     <xsl:copy-of select="."/>
   </xsl:template>
 
-  <xsl:template match="transpect:examples" mode="raw-list">
+  <xsl:template match="tr:examples" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
-    <xsl:variable name="context" select="." as="element(transpect:examples)"/>
+    <xsl:variable name="context" select="." as="element(tr:examples)"/>
     <xsl:variable name="files" as="document-node(element(*))*">
-      <xsl:sequence select="for $f in transpect:file 
-                            return transpect:doc($f/@href, $catalog)"/>
-      <xsl:sequence select="for $c in transpect:collection 
-                            return transpect:find-in-dir(
+      <xsl:sequence select="for $f in tr:file 
+                            return tr:doc($f/@href, $catalog)"/>
+      <xsl:sequence select="for $c in tr:collection 
+                            return tr:find-in-dir(
                               $c/@dir-uri, 
                               $c/@file, 
                               $catalog
                             )" use-when="not(contains(system-property('xsl:product-name'), 'Saxon-CE'))"/>
     </xsl:variable>
     <!-- there may be duplicates -->
-    <xsl:message select="'FILES ', count($files), ' ', count(descendant::transpect:collection), ' ', count(descendant::transpect:file)"></xsl:message>
+<!--    <xsl:message select="'FILES ', count($files), ' ', count(descendant::tr:collection), ' ', count(descendant::tr:file)"></xsl:message>-->
     <xsl:for-each-group select="$files" group-by="base-uri(/*)">
       <xsl:apply-templates select="." mode="#current">
         <xsl:with-param name="example-for" select="$context/@option-value" tunnel="yes"/>
@@ -92,49 +130,49 @@
   </xsl:template>
 
   <!-- Resolves the URI against a supplied catalog and process the document in a mode that will 
-    add a transpect:name attribute to prefixed names (if there is a tempplate for that – it should be
+    add a tr:name attribute to prefixed names (if there is a tempplate for that – it should be
     in the interactive implementation).
     The latter is because browsers might mangle the prefix. 
     Please note that you might need to resolve-uri() relative hrefs prior to
-    passing them to transpect:doc() -->
-  <xsl:function name="transpect:doc" as="document-node(element(*))?">
+    passing them to tr:doc() -->
+  <xsl:function name="tr:doc" as="document-node(element(*))?">
     <xsl:param name="href" as="xs:string"/>
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?"/>
     <xsl:choose>
       <xsl:when test="$catalog">
-        <xsl:apply-templates select="doc(letex:resolve-uri-by-catalog($href, $catalog))" mode="transpect:read-doc"/>
+        <xsl:apply-templates select="doc(tr:resolve-uri-by-catalog($href, $catalog))" mode="tr:read-doc"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:apply-templates select="doc($href)" mode="transpect:read-doc"/>
+        <xsl:apply-templates select="doc($href)" mode="tr:read-doc"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:function>
   
-  <xsl:template match="/" mode="transpect:read-doc">
+  <xsl:template match="/" mode="tr:read-doc">
     <xsl:document>
       <xsl:apply-templates mode="#current"/>
     </xsl:document>
   </xsl:template>
 
-  <xsl:template match="/*" mode="transpect:read-doc">
+  <xsl:template match="/*" mode="tr:read-doc">
     <xsl:copy>
       <xsl:attribute name="xml:base" select="base-uri()"/>
       <xsl:apply-templates select="@*, *" mode="#current"/>
     </xsl:copy>
   </xsl:template>
 
-  <xsl:template match="* | @*" mode="transpect:read-doc">
+  <xsl:template match="* | @*" mode="tr:read-doc">
     <xsl:copy-of select="."/>
   </xsl:template>
 
-  <xsl:function name="transpect:find-in-dir" as="document-node(element(*))*">
+  <xsl:function name="tr:find-in-dir" as="document-node(element(*))*">
     <xsl:param name="dir-uri" as="xs:string"/>
     <xsl:param name="file-name-with-local-dir" as="xs:string"/> 
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?"/>
     <xsl:variable name="file-name" select="replace($file-name-with-local-dir, '^.+/', '')" as="xs:string"/>
     <xsl:variable name="collection-uri" select="concat(
                                                   if ($catalog) 
-                                                  then letex:resolve-uri-by-catalog($dir-uri, $catalog) 
+                                                  then tr:resolve-uri-by-catalog($dir-uri, $catalog) 
                                                   else $dir-uri,
                                                   '/?select=', $file-name, 
                                                   ';recurse=yes'
@@ -142,12 +180,12 @@
     <xsl:sequence select="collection($collection-uri)[contains(base-uri(), $file-name-with-local-dir)]"/>
   </xsl:function>
 
-  <xsl:function name="transpect:basename" as="xs:string">
+  <xsl:function name="tr:basename" as="xs:string">
     <xsl:param name="href" as="xs:string"/>
     <xsl:sequence select="replace($href, '^.+/', '')"/>
   </xsl:function>
   
-  <xsl:function name="transpect:normalize-uri" as="xs:string">
+  <xsl:function name="tr:normalize-uri" as="xs:string">
     <xsl:param name="uri" as="xs:string"/>
     <xsl:sequence select="replace($uri, '^file:///', 'file:/')"/>
   </xsl:function>
@@ -156,13 +194,13 @@
     <xsl:param name="example-for" as="xs:string?" tunnel="yes"/>
     <xsl:copy-of select="@name"/>
     <xsl:apply-templates select="@type" mode="raw-list"/>
-    <xsl:if test="not(@name) and transpect:is-step(.)">
+    <xsl:if test="not(@name) and tr:is-step(.)">
       <xsl:attribute name="name" select="generate-id()"/>
       <xsl:attribute name="generated-name" select="'true'"/>
     </xsl:if>
     <xsl:if test="local-name() = ('declare-step', 'pipeline')
                   and
-                  (base-uri() = transpect:initial-base-uris())">
+                  (base-uri() = tr:initial-base-uris())">
       <xsl:attribute name="front-end" select="'true'"/>
     </xsl:if>
     <xsl:if test="$example-for">
@@ -174,18 +212,18 @@
           <xsl:value-of select="if (@type) 
                                 then @type 
                                 else concat(
-                                  replace(($example-for, transpect:basename(base-uri()))[1], '\.[^.]+$', ''),
+                                  replace(($example-for, tr:basename(base-uri()))[1], '\.[^.]+$', ''),
                                   ' Ⓐ',
                                   if ($example-for) then 'Ⓓ' else ''
                                 )"/>
           <xsl:if test="parent::p:library">
             <xsl:text> (in library </xsl:text>
-            <xsl:value-of select="transpect:basename(base-uri())"/>
+            <xsl:value-of select="tr:basename(base-uri())"/>
             <xsl:text>)</xsl:text>
           </xsl:if>
         </xsl:when>
         <xsl:when test="self::p:library">
-          <xsl:value-of select="transpect:basename(base-uri())"/>
+          <xsl:value-of select="tr:basename(base-uri())"/>
           <xsl:text> (library)</xsl:text>
         </xsl:when>
       </xsl:choose>
@@ -218,7 +256,7 @@
     </xsl:copy>
   </xsl:template>
   
-  <xsl:template match="*[transpect:is-step(.)]
+  <xsl:template match="*[tr:is-step(.)]
                         [not(@name)]" mode="raw-list">
     <xsl:copy>
       <xsl:attribute name="name" select="generate-id()"/>
@@ -227,7 +265,7 @@
     </xsl:copy>
   </xsl:template>
   
-  <xsl:template match="*[transpect:is-step(.)][@name]" mode="raw-list">
+  <xsl:template match="*[tr:is-step(.)][@name]" mode="raw-list">
     <xsl:copy>
       <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
@@ -258,8 +296,8 @@
   <xsl:template match="p:import" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
     <xsl:variable name="href" select="string(resolve-uri(@href, (ancestor::*[@xml:base][1]/@xml:base, base-uri())[1]))" as="xs:string"/>
-    <!--<xsl:message select="'PIU: ', @href, ' ',$href, ' ', letex:resolve-uri-by-catalog($href, $catalog)"/>-->
-    <xsl:apply-templates select="transpect:doc($href, $catalog)" mode="#current">
+<!--    <xsl:message select="'PIU: ', @href, ' ',$href, ' ', tr:resolve-uri-by-catalog($href, $catalog)"/>-->
+    <xsl:apply-templates select="tr:doc($href, $catalog)" mode="#current">
       <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>

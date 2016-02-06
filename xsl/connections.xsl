@@ -4,8 +4,8 @@
   xmlns:c="http://www.w3.org/ns/xproc-step"
   xmlns:cx="http://xmlcalabash.com/ns/extensions"
   xmlns:p="http://www.w3.org/ns/xproc"
-  xmlns:transpect="http://www.le-tex.de/namespace/transpect"
-  exclude-result-prefixes="c cx xs transpect"
+  xmlns:tr="http://transpect.io"
+  exclude-result-prefixes="c cx xs tr"
   version="2.0">
 
   <xsl:import href="normalize-documentation.xsl"/>
@@ -13,7 +13,7 @@
   
   <xsl:template match="* | @*" mode="connect">
     <xsl:copy>
-<!--      <xsl:attribute name="is-step" select="transpect:is-step(self::*)"/>-->
+<!--      <xsl:attribute name="is-step" select="tr:is-step(self::*)"/>-->
       <xsl:apply-templates select="@*, node()" mode="#current"/>
     </xsl:copy>
   </xsl:template>
@@ -53,10 +53,10 @@
   <xsl:key name="primary-output-decl" match="p:output[(@primary = 'true') or (count(../p:output) = 1)][../@p:type]" use="../@p:type"/>
 
   <!-- For steps in subpipelines, Make primary inputs and outputs explicit: --> 
-  <xsl:template match="*[transpect:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]" mode="connect">
+  <xsl:template match="*[tr:is-step(.)][not(@source-type = ('declare-step', 'pipeline'))]" mode="connect">
     <xsl:copy>
       <xsl:attribute name="p:is-step" select="'true'"/>
-      <xsl:variable name="keep" select="@name, @generated-name, @transpect:name, @cx:*" as="attribute(*)*"/>
+      <xsl:variable name="keep" select="@name, @generated-name, @tr:name, @cx:*" as="attribute(*)*"/>
       <xsl:apply-templates select="$keep" mode="#current"/>
       <xsl:apply-templates select="@* except $keep" mode="make-with-option"/>
       <xsl:apply-templates select="." mode="make-primary-input-explicit"/>
@@ -66,36 +66,36 @@
   </xsl:template>
   
   <xsl:template match="@*" mode="make-with-option">
-    <p:with-option name="{name()}" select="'{.}'" transpect:name="p:with-option"/>
+    <p:with-option name="{name()}" select="'{.}'" tr:name="p:with-option"/>
   </xsl:template>
 
   <xsl:template match="text()" mode="make-primary-input-explicit make-primary-output-explicit"/>
 
   <!-- a step with a primary input port but without explicit connection to this input port -->
-  <xsl:template match="*[transpect:is-step(.) (: is a step (including step declarations) :)]
+  <xsl:template match="*[tr:is-step(.) (: is a step (including step declarations) :)]
                         [not(@source-type = ('declare-step', 'pipeline')) (: is not the declaration; rather, a step in a (sub)pipeline :)]
-                        [exists(key('primary-input-decl', transpect:name(.))) (: the step’s declaration declares a primary source port :)]
-                        [not(p:input/@port = key('primary-input-decl', transpect:name(.))/@port)
+                        [exists(key('primary-input-decl', tr:name(.))) (: the step’s declaration declares a primary source port :)]
+                        [not(p:input/@port = key('primary-input-decl', tr:name(.))/@port)
                           (: the primary input port hasn’t already been connected explicitly :)]" 
                 mode="make-primary-input-explicit">
     <p:input generated="true">
-      <xsl:copy-of select="key('primary-input-decl', transpect:name(.))/@port"/>
-      <xsl:comment>a</xsl:comment><xsl:sequence select="transpect:default-readable-port(.)"/><xsl:comment>b</xsl:comment>
+      <xsl:copy-of select="key('primary-input-decl', tr:name(.))/@port"/>
+      <xsl:comment>a</xsl:comment><xsl:sequence select="tr:default-readable-port(.)"/><xsl:comment>b</xsl:comment>
     </p:input>
   </xsl:template>
 
   <!-- approximately the same for primary output ports (except that it’s much simpler 
     because you don’t specify connections for primary output ports): -->
-  <xsl:template match="*[transpect:is-step(.)]
+  <xsl:template match="*[tr:is-step(.)]
                         [not(@source-type = ('declare-step', 'pipeline'))]
-                        [exists(key('primary-output-decl', transpect:name(.)))]
-                        [count(key('primary-output-decl', transpect:name(.))/../p:output) = 1
+                        [exists(key('primary-output-decl', tr:name(.)))]
+                        [count(key('primary-output-decl', tr:name(.))/../p:output) = 1
                          or 
-                         not(p:output/@port = key('primary-output-decl', transpect:name(.))/@port)
+                         not(p:output/@port = key('primary-output-decl', tr:name(.))/@port)
                         ]" 
                 mode="make-primary-output-explicit">
     <p:output generated="true">
-      <xsl:copy-of select="key('primary-output-decl', transpect:name(.))/@port"/>
+      <xsl:copy-of select="key('primary-output-decl', tr:name(.))/@port"/>
     </p:output>
   </xsl:template>
   
@@ -112,18 +112,18 @@
 
   <xsl:template match="p:for-each[not(p:iteration-source)]" mode="make-primary-input-explicit">
     <p:iteration-source generated="true">
-      <xsl:sequence select="transpect:default-readable-port(.)"/>
+      <xsl:sequence select="tr:default-readable-port(.)"/>
     </p:iteration-source>
   </xsl:template>
 
   <!-- For a given step in a subsequence, gives the p:pipe connection to
     the default readable port that is present here. It can be used in
     generated p:input elements. -->
-  <xsl:function name="transpect:default-readable-port" as="element(p:pipe)?">
+  <xsl:function name="tr:default-readable-port" as="element(p:pipe)?">
     <xsl:param name="context" as="element(*)"/>
     <xsl:variable name="context-or-wrapper" as="element(*)">
       <xsl:choose>
-        <xsl:when test="$context/preceding-sibling::*[transpect:is-step(.)]">
+        <xsl:when test="$context/preceding-sibling::*[tr:is-step(.)]">
           <xsl:sequence select="$context"/>
         </xsl:when>
         <xsl:otherwise>
@@ -142,10 +142,10 @@
       </xsl:choose>
     </xsl:variable>
     <!-- p:for-each, p:choose, p:group or atomic step in a subpipeline -->
-    <xsl:variable name="preceding-step" as="element()?" select="$context-or-wrapper/preceding-sibling::*[transpect:is-step(.)][1]"/>
+    <xsl:variable name="preceding-step" as="element()?" select="$context-or-wrapper/preceding-sibling::*[tr:is-step(.)][1]"/>
     <xsl:variable name="preceding-steps-output-decl" as="element(p:output)*"
       select="if ($preceding-step) then 
-              key('primary-output-decl', transpect:name($preceding-step), root($context))
+              key('primary-output-decl', tr:name($preceding-step), root($context))
               else ()"/>
     <xsl:if test="count($preceding-steps-output-decl) gt 1">
 <!--      <xsl:message select="'More than one primary output declaration in ', $preceding-steps-output-decl/.., ' ', base-uri($context), ': ', $preceding-steps-output-decl"/>-->
@@ -173,34 +173,34 @@
     </xsl:choose>
   </xsl:function>
 
-  <xsl:function name="transpect:primary-output-port" as="element(p:output)">
+  <xsl:function name="tr:primary-output-port" as="element(p:output)">
     <xsl:param name="step" as="element(*)"/>
-    <xsl:variable name="own-decl" as="element(p:output)" select="key('primary-output-decl', transpect:name($step), root($step))"/>
+    <xsl:variable name="own-decl" as="element(p:output)" select="key('primary-output-decl', tr:name($step), root($step))"/>
     <xsl:choose>
       <xsl:when test="exists($own-decl)">
         <xsl:sequence select="$own-decl"/>
       </xsl:when>
-      <xsl:when test="exists($step/*[transpect:is-step(.)])">
-        <xsl:sequence select="transpect:primary-output-port(($step/*[transpect:is-step(.)])[last()])"/>
+      <xsl:when test="exists($step/*[tr:is-step(.)])">
+        <xsl:sequence select="tr:primary-output-port(($step/*[tr:is-step(.)])[last()])"/>
       </xsl:when>
     </xsl:choose>
   </xsl:function>
 
   <!-- Collateral; convenience attribute: --> 
 
-  <xsl:function name="transpect:normalize-for-filename" as="xs:string">
+  <xsl:function name="tr:normalize-for-filename" as="xs:string">
     <xsl:param name="name" as="xs:string"/>
     <xsl:sequence select="replace(replace($name, ':', '_'), '(\s+\(.+\)|[^0-9a-z_-]+)', '', 'i')"/>
   </xsl:function>
   
-  <!--<xsl:function name="transpect:normalize-for-filename" as="xs:string">
+  <!--<xsl:function name="tr:normalize-for-filename" as="xs:string">
     <xsl:param name="name" as="xs:string"/>
     <xsl:sequence select="$name"/>
   </xsl:function>-->
   
   <xsl:template match="@display-name" mode="connect">
     <xsl:copy/>
-    <xsl:attribute name="transpect:filename" select="transpect:normalize-for-filename(.)"/>
+    <xsl:attribute name="tr:filename" select="tr:normalize-for-filename(.)"/>
   </xsl:template>
   
 </xsl:stylesheet>
