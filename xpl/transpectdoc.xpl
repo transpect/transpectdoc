@@ -31,7 +31,14 @@ transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
     <p>within the calabash.sh invocation (provided the files reside there, of course).</p>
     <h4>Adding Examples for Dynamically Evaluated Pipelines</h4>
     <p>If your pipeline loads and executes pipelines at runtime, i.e., pipelines that are not known statically in advance,
-    you may provide examples for these pipelines. Example:</p>
+    you may provide examples for these pipelines. Examples:</p>
+    <pre><code>&lt;tr:dynamic-transformation-pipeline load=evolve-hub/driver" fallback-xpl="fallback.xpl"&gt;
+    &lt;p:pipeinfo&gt;
+      &lt;examples xmlns="http://transpect.io"&gt;
+        &lt;file href="fallback.xpl"/&gt;
+      &lt;/examples&gt;
+    &lt;/p:pipeinfo&gt;
+    &lt;/tr:dynamic-transformation-pipeline&gt;</code></pre>
     <pre><code>&lt;tr:dynamic-transformation-pipeline load="hub2hobots/hub2hobots">
   …
   &lt;p:pipeinfo>

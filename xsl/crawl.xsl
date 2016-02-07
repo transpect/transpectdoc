@@ -83,7 +83,7 @@
   <xsl:template match="p:library | p:declare-step[not(parent::p:library)] | p:pipeline[not(parent::p:library)]" 
     priority="4" mode="raw-list">
     <xsl:param name="catalog" as="document-node(element(cat:catalog))?" tunnel="yes"/>
-    <xsl:param name="pre-catalog-resolution-href" as="attribute(href)?" tunnel="yes"/>
+    <xsl:param name="pre-catalog-resolution-href" as="xs:string?" tunnel="yes"/>
     <c:file source-type="{local-name()}" href="{tr:normalize-uri(base-uri(.))}">
       <xsl:variable name="project-relative-path" as="xs:string"
         select="if ($base-dir-uri-regex) 
@@ -92,9 +92,16 @@
       <xsl:if test="$project-relative-path ne base-uri(/*)">
         <xsl:attribute name="project-relative-path" select="$project-relative-path"/>
       </xsl:if>
-      <xsl:if test="$pre-catalog-resolution-href">
-        <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>  
-      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="$pre-catalog-resolution-href">
+          <xsl:attribute name="canonical-href" select="resolve-uri($pre-catalog-resolution-href, tr:reverse-resolve-uri-by-catalog(base-uri(/*), $catalog))"/>
+          <xsl:attribute name="canonical-href" select="$pre-catalog-resolution-href"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:attribute name="canonical-href" select="tr:reverse-resolve-uri-by-catalog(base-uri(/*), $catalog)"/>
+          <xsl:attribute name="foo" select="tr:reverse-resolve-uri-by-catalog('file:/C:/cygwin/home/gerrit/Hogrefe/BookTagSet/transpect-git/a9s/common/xpl/idml2hobots.xpl', $catalog)"></xsl:attribute>
+        </xsl:otherwise>
+      </xsl:choose>
       <xsl:call-template name="process-inner"/>
     </c:file>
     <xsl:apply-templates select="p:import" mode="#current">
@@ -112,7 +119,7 @@
     <xsl:variable name="context" select="." as="element(tr:examples)"/>
     <xsl:variable name="files" as="document-node(element(*))*">
       <xsl:sequence select="for $f in tr:file 
-                            return tr:doc($f/@href, $catalog)"/>
+                            return tr:doc(resolve-uri($f/@href, base-uri(.)), $catalog)"/>
       <xsl:sequence select="for $c in tr:collection 
                             return tr:find-in-dir(
                               $c/@dir-uri, 
@@ -124,6 +131,8 @@
 <!--    <xsl:message select="'FILES ', count($files), ' ', count(descendant::tr:collection), ' ', count(descendant::tr:file)"></xsl:message>-->
     <xsl:for-each-group select="$files" group-by="base-uri(/*)">
       <xsl:apply-templates select="." mode="#current">
+        <xsl:with-param name="pre-catalog-resolution-href" tunnel="yes" as="xs:string"
+          select="tr:reverse-resolve-uri-by-catalog(current-grouping-key(), $catalog)"/>
         <xsl:with-param name="example-for" select="$context/@option-value" tunnel="yes"/>
       </xsl:apply-templates>
     </xsl:for-each-group>
@@ -298,7 +307,7 @@
     <xsl:variable name="href" select="string(resolve-uri(@href, (ancestor::*[@xml:base][1]/@xml:base, base-uri())[1]))" as="xs:string"/>
 <!--    <xsl:message select="'PIU: ', @href, ' ',$href, ' ', tr:resolve-uri-by-catalog($href, $catalog)"/>-->
     <xsl:apply-templates select="tr:doc($href, $catalog)" mode="#current">
-      <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes"/>
+      <xsl:with-param name="pre-catalog-resolution-href" select="@href" tunnel="yes" as="xs:string"/>
     </xsl:apply-templates>
   </xsl:template>
   

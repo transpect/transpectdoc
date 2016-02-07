@@ -12,7 +12,7 @@
   <xsl:import href="http://transpect.io/xslt-util/xslt-based-catalog-resolver/xsl/resolve-uri-by-catalog.xsl"/>
   <xsl:import href="crawl.xsl"/>
 
-  <xsl:param name="catalog-uri" as="xs:string?" select="'http://customers.le-tex.de/generic/book-conversion/xmlcatalog/catalog.xml'"/>
+  <xsl:param name="catalog-uri" as="xs:string?" select="'http://this.transpect.io/xmlcatalog/catalog.xml'"/>
 
   <xsl:variable name="base-dir-uri-regex" as="xs:string" select="replace($project-root-uri, '^file:/+', 'file:/+')"/>
 

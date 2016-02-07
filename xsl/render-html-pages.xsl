@@ -199,7 +199,7 @@
         </li>
       </xsl:if>
 
-      <xsl:variable name="examples" select="//*[@example-for]"/>
+      <xsl:variable name="examples" select="//*[@example-for]" as="element(c:file)*"/><!-- c:file -->
       <xsl:if test="exists($examples)">
         <li>
           <p class="toggle level1"><a class="fold pointer">Dynamic Evaluation Candidates</a>
@@ -340,6 +340,7 @@
       </p>
     </li>
   </xsl:template>
+  
 
   <xsl:template name="file-paths">
     <div class="file-path block">
@@ -597,7 +598,7 @@
             </span>
           </xsl:if>
         </p>
-        <xsl:apply-templates select="p:documentation" mode="#current"/>
+        <xsl:apply-templates select="p:documentation | p:pipeinfo/tr:examples" mode="#current"/>
       </td>
       <td>
         <xsl:if test="p:input">
@@ -643,8 +644,21 @@
       </td>
     </tr>
   </xsl:template>
+  
   <xsl:template match="p:documentation" mode="subpipeline" priority="2">
     <xsl:sequence select="node()"/>
+  </xsl:template>
+  
+  <xsl:template match="tr:examples" mode="subpipeline">
+    <h4>Example Pipelines</h4>
+    <ul class="connections">
+      <xsl:apply-templates mode="#current"/>  
+    </ul>
+  </xsl:template>
+  
+  <xsl:template match="tr:examples/tr:file" mode="subpipeline">
+    <xsl:apply-templates mode="links" 
+      select="key('by-canonical-href', resolve-uri(@href, ancestor-or-self::*[@canonical-href][1]/@canonical-href))"></xsl:apply-templates>
   </xsl:template>
   
   <xsl:template match="p:input" mode="subpipeline">
