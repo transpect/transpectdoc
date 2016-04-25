@@ -16,21 +16,27 @@ FRONTEND_PIPELINES = adaptions/common/xpl/idml2hobots.xpl adaptions/common/xpl/h
 transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
 	      $(CALABASH) $(foreach pipe,$^,$(addprefix -i source=,$(call uri,$(pipe)))) \
 	      		  	    $(call uri,transpectdoc/xpl/transpectdoc.xpl) \
-				    	   					  debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)
-										  Set the svn property svn:mime-type for the transpectdoc.css in your documentation output directory to text/css, if you want to view the generated documentation online, not only locally.
+				    debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)
+
+Set the svn property `svn:mime-type` for the `transpectdoc.css` in your documentation output directory to text/css, if you want to view the generated documentation online, not only locally.
 
 For customizing transpectdoc, there are three XSLT passes whose templates etc. may be overridden by specifying, e.g.:
 
-    		-i crawling-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-crawl.xsl) \
-		   			-i connections-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-connections.xsl) \
-					   			   -i rendering-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-render-html-pages.xsl) \
-								   within the calabash.sh invocation (provided the files reside there, of course).
+```
+-i crawling-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-crawl.xsl \
+-i connections-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-connections.xsl \
+-i rendering-xslt=$(call uri,adaptions/common/transpectdoc/xsl/pubcoach-render-html-pages.xsl 
+```
+
+within the calabash.sh invocation (provided the files reside there, of course).
+
 
 
 # Adding Examples for Dynamically Evaluated Pipelines
 
 If your pipeline loads and executes pipelines at runtime, i.e., pipelines that are not known statically in advance, you may provide examples for these pipelines. Examples:
 
+```
 <tr:dynamic-transformation-pipeline load=evolve-hub/driver" fallback-xpl="fallback.xpl">
     <p:pipeinfo>
       <examples xmlns="http://transpect.io">
@@ -47,10 +53,13 @@ If your pipeline loads and executes pipelines at runtime, i.e., pipelines that a
     </examples>
   </p:pipeinfo>
 </tr:dynamic-transformation-pipeline
+```
+
 Please note that the generator-collection element is not implemted yet. It is meant for holding pointers to XSLT stylesheets that generate the dynamically evaluated pipelines.
 
 There is an optional attribute @for on the examples element:
 
+```
 <tr:evolve-hub name="evolve-hub-dyn" srcpaths="yes">
   …
   <p:pipeinfo>
@@ -61,7 +70,9 @@ There is an optional attribute @for on the examples element:
     </examples>
   </p:pipeinfo>
 </tr:evolve-hub>
-Since the examples to the evolve-hub tr:dynamic-transformation-pipeline will vary from project to project, it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the tr:evolve-hub invocation in your project’s pipeline. In the @for attribute, you tell transpectdoc that the examples are for the input port called 'pipeline' of tr:dynamic-transformation-pipeline (provided that this port has an xml:id of 'eval-pipeline').
+```
+
+Since the examples to the evolve-hub `tr:dynamic-transformation-pipeline` will vary from project to project, it is impractical to provide one single set of examples for this pipeline. Instead, you provide the examples at the `tr:evolve-hub` invocation in your project’s pipeline. In the @for attribute, you tell transpectdoc that the examples are for the input port called 'pipeline' of `tr:dynamic-transformation-pipeline` (provided that this port has an xml:id of 'eval-pipeline').
 
 The front-end pipelines of the transpect installation.
 
