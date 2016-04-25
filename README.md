@@ -12,11 +12,13 @@ For each of the steps’ input and output ports, a linked list will be generated
 
 Sample invocation (from a Makefile):
 
+```
 FRONTEND_PIPELINES = adaptions/common/xpl/idml2hobots.xpl adaptions/common/xpl/hobots2epub-frontend.xpl crossref/xpl/process-crossref-results.xpl crossref/xpl/jats-submit-crossref-query.xpl
 transpectdoc: $(addprefix $(MAKEFILEDIR)/,$(FRONTEND_PIPELINES))
 	      $(CALABASH) $(foreach pipe,$^,$(addprefix -i source=,$(call uri,$(pipe)))) \
 	      		  	    $(call uri,transpectdoc/xpl/transpectdoc.xpl) \
 				    debug=$(DEBUG) debug-dir-uri=$(call uri,$(MAKEFILEDIR)/transpectdoc/debug)
+```
 
 Set the svn property `svn:mime-type` for the `transpectdoc.css` in your documentation output directory to text/css, if you want to view the generated documentation online, not only locally.
 
